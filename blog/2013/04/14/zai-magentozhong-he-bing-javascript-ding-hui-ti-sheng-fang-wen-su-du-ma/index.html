@@ -3,7 +3,7 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Bill</title>
+	<title>在Magento中合并JavaScript一定会提升访问速度吗 - Bill</title>
 	<meta name="author" content="Bill Sion">
 
 	
@@ -71,18 +71,9 @@
 	
 		
 	
-	<div id="content" class="inner">
-
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/04/14/zai-magentozhong-he-bing-javascript-ding-hui-ti-sheng-fang-wen-su-du-ma/">
-		
-			在Magento中合并JavaScript一定会提升访问速度吗</a>
-	</h2>
-	<div class="entry-content">
-		<p>本文译自<a href="http://fishpig.co.uk/blog/why-you-shouldnt-merge-javascript-in-magento.html">fishpig</a></p>
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">在Magento中合并JavaScript一定会提升访问速度吗</h2>
+	<div class="entry-content"><p>本文译自<a href="http://fishpig.co.uk/blog/why-you-shouldnt-merge-javascript-in-magento.html">fishpig</a></p>
 
 <p>很多人 - 包括我自己 - 认为把所有的独立JS文件合并成一个文件是一个提升前端速度不错的的方法。道理很简单，合并文件，自然就减少了浏览器在加载页面时的请求数量，好处自然就是缩短完成请求的时间，让页面载入更快。让我们通过Magento中的一个例子来看看它是怎么处理的。</p>
 
@@ -133,10 +124,7 @@
   </catalog_product_view></p></blockquote>
 
 <p>注意到了新参数 group 吗？和合并所有的Javascript到一个文件不一样，group参数将会判断哪些Javascript文件需要合并。上面的代码将会为产品页面生成两个分开的合并文件: 一个是包含在首页里用到的全局Javascript，一个是包含只会在产品页面里用到的文件。虽然这样做会导制额外的请求，但这样做还是会节省时间，因为不用再去下载已经在首页下载过的文件！如果在整站中用到这个小技巧，每一个Javascript将只会被下载一次。</p>
-
-		
-		
-	</div>
+</div>
 
 
 <div class="meta">
@@ -159,11 +147,18 @@
 	
 </div></article>
 
-<nav id="pagenavi">
-    
-    
-    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
-</nav></div>
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+</div>
 	<footer id="footer" class="inner">Copyright &copy; 2013
 
     Bill Sion

@@ -112,25 +112,21 @@
 
 <p>在Magento里面，Javascript是通过XML文件里的Head block或是数组来循环添加到HTML里。我们建议加一个额外的参数在你的Javascript包含代码里，看下面的代码：</p>
 
-<blockquote><p>  <default>
-  <reference name="head"></p>
-
-<pre><code>  &lt;action method="addJs"&gt;&lt;script&gt;prototype/prototype.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-  &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/builder.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-  &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/effects.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-  &lt;action method="addJs"&gt;&lt;script&gt;varien/form.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt; &lt;/reference&gt;
+<pre><code>&lt;default&gt;
+    &lt;reference name="head"&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;prototype/prototype.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/builder.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/effects.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;varien/form.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
+    &lt;/reference&gt;
+&lt;/default&gt;
+&lt;catalog_product_view&gt;
+    &lt;reference name="head"&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;varien/product.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;varien/configurable.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
+    &lt;/reference&gt;
+&lt;/catalog_product_view&gt;
 </code></pre>
-
-<p>  </default>
-  <catalog_product_view></p>
-
-<pre><code>  &lt;reference name="head"&gt;
-      &lt;action method="addJs"&gt;&lt;script&gt;varien/product.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
-      &lt;action method="addJs"&gt;&lt;script&gt;varien/configurable.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
-</code></pre>
-
-<p>  </reference>
-  </catalog_product_view></p></blockquote>
 
 <p>注意到了新参数 group 吗？和合并所有的Javascript到一个文件不一样，group参数将会判断哪些Javascript文件需要合并。上面的代码将会为产品页面生成两个分开的合并文件: 一个是包含在首页里用到的全局Javascript，一个是包含只会在产品页面里用到的文件。虽然这样做会导制额外的请求，但这样做还是会节省时间，因为不用再去下载已经在首页下载过的文件！如果在整站中用到这个小技巧，每一个Javascript将只会被下载一次。</p>
 
@@ -154,6 +150,10 @@
 
 <time datetime="2013-04-14T15:53:00+08:00" pubdate data-updated="true">Apr 14<span>th</span>, 2013</time></div>
 	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/magento/'>Magento,</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>
+
 
 </div>
 	

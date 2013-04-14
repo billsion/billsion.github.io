@@ -1,14 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
-        <loc>http://billsion.github.io/blog/2013/04/14/hellow-world/</loc>
-        <lastmod>2013-04-14T15:23:26+08:00</lastmod>
-    </url>
-    <url>
-        <loc>http://billsion.github.io/blog/2013/04/14/hello/</loc>
-        <lastmod>2013-04-14T15:23:26+08:00</lastmod>
-    </url>
-    <url>
         <loc>http://billsion.github.io/blog/archives/</loc>
         <lastmod>2013-04-14T15:23:26+08:00</lastmod>
     </url>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[My Octopress Blog]]></title>
+  <link href="http://billsion.github.io/atom.xml" rel="self"/>
+  <link href="http://billsion.github.io/"/>
+  <updated>2013-04-14T14:10:45+08:00</updated>
+  <id>http://billsion.github.io/</id>
+  <author>
+    <name><![CDATA[Your Name]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[hello]]></title>
+    <link href="http://billsion.github.io/blog/2013/04/14/hello/"/>
+    <updated>2013-04-14T13:22:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/04/14/hello</id>
+    <content type="html"><![CDATA[<h3>dsafasdfasf</h3>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Hellow World]]></title>
+    <link href="http://billsion.github.io/blog/2013/04/14/hellow-world/"/>
+    <updated>2013-04-14T12:59:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/04/14/hellow-world</id>
+    <content type="html"><![CDATA[
+]]></content>
+  </entry>
+  
+</feed>

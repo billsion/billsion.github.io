@@ -4,7 +4,7 @@
   <title><![CDATA[Bill]]></title>
   <link href="http://billsion.github.io/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-04-14T16:56:14+08:00</updated>
+  <updated>2013-04-15T10:28:43+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -12,6 +12,27 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[在Magento邮件模板中添加自定义变量]]></title>
+    <link href="http://billsion.github.io/blog/2013/04/15/add-custom-variables-in-email-template/"/>
+    <updated>2013-04-15T10:27:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/04/15/add-custom-variables-in-email-template</id>
+    <content type="html"><![CDATA[<p>这几天在Magento开发上遇到一个问题，就是在Email模板中显示自定义的变量。</p>
+
+<p>很简单的扩展：</p>
+
+<ol>
+<li>找到当前需要修改的Email模板，模板放在 <code>{ $website_root }/app/locale/{ $language }/template/email/</code></li>
+<li>找到对应的模块，从相应的模版名字可以看出来。比如说 <code>order_new.html</code> 是 <code>Mage_Sales_Model_Order</code> 模块。</li>
+<li>找到发送邮件的方法，<code>order_new.html</code> 对应的发送邮件方法是 <code>sendNewOrderEmail</code></li>
+<li>在该方法中查找 <code>$mailer-&gt;setTemplateParams</code>的方法，里面的参数就是将会在页面中显示的变量/对象。</li>
+</ol>
+
+
+<p>稍微修改下就成了，就这么简单。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[在Magento中合并JavaScript一定会提升访问速度吗]]></title>

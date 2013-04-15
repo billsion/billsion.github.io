@@ -7,7 +7,8 @@
 	<meta name="author" content="Bill Sion">
 
 	
-	<meta name="description" content="本文译自fishpig 很多人 - 包括我自己 - 认为把所有的独立JS文件合并成一个文件是一个提升前端速度不错的的方法。道理很简单，合并文件，自然就减少了浏览器在加载页面时的请求数量，好处自然就是缩短完成请求的时间，让页面载入更快。让我们通过Magento中的一个例子来看看它是怎么处理的。 &hellip;">
+	<meta name="description" content="这几天在Magento开发上遇到一个问题，就是在Email模板中显示自定义的变量。 很简单的扩展： 找到当前需要修改的Email模板，模板放在 { $website_root }/app/locale/{ $language }/template/email/
+找到对应的模块， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -73,6 +74,58 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/04/15/add-custom-variables-in-email-template/">
+		
+			在Magento邮件模板中添加自定义变量</a>
+	</h2>
+	<div class="entry-content">
+		<p>这几天在Magento开发上遇到一个问题，就是在Email模板中显示自定义的变量。</p>
+
+<p>很简单的扩展：</p>
+
+<ol>
+<li>找到当前需要修改的Email模板，模板放在 <code>{ $website_root }/app/locale/{ $language }/template/email/</code></li>
+<li>找到对应的模块，从相应的模版名字可以看出来。比如说 <code>order_new.html</code> 是 <code>Mage_Sales_Model_Order</code> 模块。</li>
+<li>找到发送邮件的方法，<code>order_new.html</code> 对应的发送邮件方法是 <code>sendNewOrderEmail</code></li>
+<li>在该方法中查找 <code>$mailer-&gt;setTemplateParams</code>的方法，里面的参数就是将会在页面中显示的变量/对象。</li>
+</ol>
+
+
+<p>稍微修改下就成了，就这么简单。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-15T10:27:00+08:00" pubdate data-updated="true">Apr 15<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/magento/'>Magento</a>
+
+
+</div>
+	
+</div></article>
 
 
     <article class="post">

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Magento, | Bill]]></title>
+  <title><![CDATA[Category: Magento | Bill]]></title>
   <link href="http://billsion.github.io/blog/categories/magento/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-04-14T16:56:14+08:00</updated>
+  <updated>2013-04-15T10:28:43+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -14,57 +14,23 @@
 
   
   <entry>
-    <title type="html"><![CDATA[在Magento中合并JavaScript一定会提升访问速度吗]]></title>
-    <link href="http://billsion.github.io/blog/2013/04/14/zai-magentozhong-he-bing-javascript-ding-hui-ti-sheng-fang-wen-su-du-ma/"/>
-    <updated>2013-04-14T15:53:00+08:00</updated>
-    <id>http://billsion.github.io/blog/2013/04/14/zai-magentozhong-he-bing-javascript-ding-hui-ti-sheng-fang-wen-su-du-ma</id>
-    <content type="html"><![CDATA[<p>本文译自<a href="http://fishpig.co.uk/blog/why-you-shouldnt-merge-javascript-in-magento.html">fishpig</a></p>
+    <title type="html"><![CDATA[在Magento邮件模板中添加自定义变量]]></title>
+    <link href="http://billsion.github.io/blog/2013/04/15/add-custom-variables-in-email-template/"/>
+    <updated>2013-04-15T10:27:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/04/15/add-custom-variables-in-email-template</id>
+    <content type="html"><![CDATA[<p>这几天在Magento开发上遇到一个问题，就是在Email模板中显示自定义的变量。</p>
 
-<p>很多人 - 包括我自己 - 认为把所有的独立JS文件合并成一个文件是一个提升前端速度不错的的方法。道理很简单，合并文件，自然就减少了浏览器在加载页面时的请求数量，好处自然就是缩短完成请求的时间，让页面载入更快。让我们通过Magento中的一个例子来看看它是怎么处理的。</p>
+<p>很简单的扩展：</p>
 
-<p>设想一下你刚刚在后台开启了Javascript 合并功能，这时有人来浏览你的网站。Magento将整理所有的XML布局文件并且判断在首页应该包含哪些Javascript。所有的这些被请求的JS文件都会被合并成一个单一文件并且以MD5加密的文件名来存储，此新文件，比如说是 f0eb853c09ba3e46ad21fb89b8d57626.js，只为那些浏览过该网页并保存在浏览器缓存中的用户服务。</p>
+<ol>
+<li>找到当前需要修改的Email模板，模板放在 <code>{ $website_root }/app/locale/{ $language }/template/email/</code></li>
+<li>找到对应的模块，从相应的模版名字可以看出来。比如说 <code>order_new.html</code> 是 <code>Mage_Sales_Model_Order</code> 模块。</li>
+<li>找到发送邮件的方法，<code>order_new.html</code> 对应的发送邮件方法是 <code>sendNewOrderEmail</code></li>
+<li>在该方法中查找 <code>$mailer-&gt;setTemplateParams</code>的方法，里面的参数就是将会在页面中显示的变量/对象。</li>
+</ol>
 
-<p>接下来，用户点击一个链接进入到目录页面。这时，Magento会再一次整理所有的XML布局文件并且判断目录页面会用到哪些JS文件。此时，Magento 会发现在首页用到的JS文件同样也会在目前的页面中用到，这一次不同，浏览器知道自己已经下载了这个文件，便不会再次下载。相反，文件会从用户的缓存中加载以节省时间，带宽和CPU资源！</p>
 
-<p>目前为止，一切都运行的好好的，我们通过减少对服务器的请求让页面变快了，但是……</p>
-
-<p>接下来，用户被一个产品吸引，于是点击进去到详细页面浏览。再一次，Magento判定哪些在布局文件(XML)里的JS文件需要被加载。此时，Magento发现会用到首页已经加载的JS文件，当然还有两个新文件需要加载。但是已有的合并文件中不存在这样的内容，于是Magento会新建一个名为139f9771ba2ba0cae754978fab4a3c35.js的文件。粗略估计该文件的80％和首页的脚本文件一样，已经被用户下载并缓存了。但还是会迫使用户下载该文件全部内容！虽然此文件的80％已经缓存了，但用户的浏览器完全不知情，还是会下载该文件并缓存！</p>
-
-<p>合并JS文件的初衷是为了减少页面的加载时间，但是在上述场景里，用户被迫再次下载一大块代码！这样做毫无疑问增加了页面载入时间（下载并不需要下载的JS文件，差不多有～40kb），这样做的结果反而和合并文件的初衷相违被。</p>
-
-<p>让我们来看看如果不开启合并JS会怎样。</p>
-
-<p>当用户第一次访问首页时，之前合并过的JS文件在这次请求中会被单独下载。虽然这些文件整个大小和之前合并文件的大小一致，但是请求时间会比较长，因为文件都是被单独请求/下载/缓存的。</p>
-
-<p>接下来，用户访问分类页面，这个页面用到了和之前在浏览首页时下载/缓存过的文件。结果就是此页面加载的时间和之前合并JS后加载页面用的时间一样。在这两种情况下，所有需要用到的JS文件都已经下载下来并且已经缓存了，总而言之，浏览器可以不管这些文件了。</p>
-
-<p>最后，用户访问了产品页面，此页面把之前在首页和分类页面加载过的文件，除此之外加载两个新文件。这些文件已经在首页或是分类页面缓存过了，所以浏览器直接跳过下载，并且缓存两个之前并没有访问过的文件！同时，Magento首页用到的文件占到了产品页面里JS文件数量的80%。当关闭合并选项后，我们就直接的下载了剩下的20%。在之前的合并例子里，等于说是整个重新下载了一遍！</p>
-
-<p>问题就是用户在访问不同页面时，JS文件也会有不同的组合，这样难免在一个页面中漏掉某一个JS，每当这种情况发生时，用户就会被强迫下载之前已经下载过的文件，并以另一个文件名保存。</p>
-
-<h3>怎么办?</h3>
-
-<p>当Magento的合并功能有问题时，就只能动手作些小修改了。</p>
-
-<p>在Magento里面，Javascript是通过XML文件里的Head block或是数组来循环添加到HTML里。我们建议加一个额外的参数在你的Javascript包含代码里，看下面的代码：</p>
-
-<pre><code>&lt;default&gt;
-    &lt;reference name="head"&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;prototype/prototype.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/builder.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/effects.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;varien/form.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-    &lt;/reference&gt;
-&lt;/default&gt;
-&lt;catalog_product_view&gt;
-    &lt;reference name="head"&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;varien/product.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;varien/configurable.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
-    &lt;/reference&gt;
-&lt;/catalog_product_view&gt;
-</code></pre>
-
-<p>注意到了新参数 group 吗？和合并所有的Javascript到一个文件不一样，group参数将会判断哪些Javascript文件需要合并。上面的代码将会为产品页面生成两个分开的合并文件: 一个是包含在首页里用到的全局Javascript，一个是包含只会在产品页面里用到的文件。虽然这样做会导制额外的请求，但这样做还是会节省时间，因为不用再去下载已经在首页下载过的文件！如果在整站中用到这个小技巧，每一个Javascript将只会被下载一次。</p>
+<p>稍微修改下就成了，就这么简单。</p>
 ]]></content>
   </entry>
   

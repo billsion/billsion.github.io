@@ -3,11 +3,12 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Blog Archives - Bill</title>
+	<title>在Magento邮件模板中添加自定义变量 - Bill</title>
 	<meta name="author" content="Bill Sion">
 
 	
-	<meta name="description" content=" 2013 在Magento邮件模板中添加自定义变量 Apr 15 Magento 在Magento中合并JavaScript一定会提升访问速度吗 Apr 14 Magento,, 翻译 ">
+	<meta name="description" content="这几天在Magento开发上遇到一个问题，就是在Email模板中显示自定义的变量。 很简单的扩展： 找到当前需要修改的Email模板，模板放在 { $website_root }/app/locale/{ $language }/template/email/
+找到对应的模块， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -72,46 +73,59 @@
 	
 		
 	
-	<div id="content" class="inner">
-	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">在Magento邮件模板中添加自定义变量</h2>
+	<div class="entry-content"><p>这几天在Magento开发上遇到一个问题，就是在Email模板中显示自定义的变量。</p>
+
+<p>很简单的扩展：</p>
+
+<ol>
+<li>找到当前需要修改的Email模板，模板放在 <code>{ $website_root }/app/locale/{ $language }/template/email/</code></li>
+<li>找到对应的模块，从相应的模版名字可以看出来。比如说 <code>order_new.html</code> 是 <code>Mage_Sales_Model_Order</code> 模块。</li>
+<li>找到发送邮件的方法，<code>order_new.html</code> 对应的发送邮件方法是 <code>sendNewOrderEmail</code></li>
+<li>在该方法中查找 <code>$mailer-&gt;setTemplateParams</code>的方法，里面的参数就是将会在页面中显示的变量/对象。</li>
+</ol>
 
 
-	
-	
-	<section class="archives"><h1 class="year">2013</h1>
+<p>稍微修改下就成了，就这么简单。</p>
+</div>
 
-<article>
-	<h2 class="title"><a href="/blog/2013/04/15/add-custom-variables-in-email-template/">在Magento邮件模板中添加自定义变量</a></h2>
-	<div class="meta">
-		<div class="date">Apr 15</div>
-		<div class="tags">
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-15T10:27:00+08:00" pubdate data-updated="true">Apr 15<span>th</span>, 2013</time></div>
+	<div class="tags">
 
 
 	<a class='category' href='/blog/categories/magento/'>Magento</a>
 
 
 </div>
-	    
-	</div>
-</article>
-
 	
+</div></article>
 
-
-<article>
-	<h2 class="title"><a href="/blog/2013/04/14/zai-magentozhong-he-bing-javascript-ding-hui-ti-sheng-fang-wen-su-du-ma/">在Magento中合并JavaScript一定会提升访问速度吗</a></h2>
-	<div class="meta">
-		<div class="date">Apr 14</div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/magento/'>Magento,</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>
-
-
-</div>
-	    
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
 	</div>
-</article>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
 </div>
 	<footer id="footer" class="inner">Copyright &copy; 2013
 

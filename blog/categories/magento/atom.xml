@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Magento | Bill]]></title>
   <link href="http://billsion.github.io/blog/categories/magento/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-04-15T10:28:43+08:00</updated>
+  <updated>2013-05-28T12:04:22+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -12,6 +12,23 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[在Magento后台开启Hint]]></title>
+    <link href="http://billsion.github.io/blog/2013/05/28/enable-template-hints-in-magento-backend/"/>
+    <updated>2013-05-28T11:56:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/05/28/enable-template-hints-in-magento-backend</id>
+    <content type="html"><![CDATA[<p>经常写Magento的人对前台的Hints并不陌生，开启了Hints之后，对Block的查找很方便，特别是那些嵌套得很厉害的页面来讲。但是很少有人知道其实后台也可以开启这个功能，不过不是在管理页面打开，需要直接在表里面添加一条数据，像下面这样。
+<code>``
+</code>INSERT INTO <code>core_config_data</code> (<code>scope</code>, <code>scope_id</code>, <code>path</code>, <code>value</code>)</p>
+
+<pre><code>   VALUES ('websites', '0', 'dev/debug/template_hints', '1');`
+</code></pre>
+
+<p>```
+1表示开启，0表示关闭，当然，你把这条记录删掉也行。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[在Magento邮件模板中添加自定义变量]]></title>

@@ -3,11 +3,13 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Category: Magento - Bill</title>
+	<title>在Magento后台开启Hint - Bill</title>
 	<meta name="author" content="Bill Sion">
 
 	
-	<meta name="description" content="Category: Magento">
+	<meta name="description" content="经常写Magento的人对前台的Hints并不陌生，开启了Hints之后，对Block的查找很方便，特别是那些嵌套得很厉害的页面来讲。但是很少有人知道其实后台也可以开启这个功能，不过不是在管理页面打开，需要直接在表里面添加一条数据，像下面这样。 1
+2
+`INSERT INTO ` &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -72,46 +74,54 @@
 	
 		
 	
-	<div id="content" class="inner">
-	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">在Magento后台开启Hint</h2>
+	<div class="entry-content"><p>经常写Magento的人对前台的Hints并不陌生，开启了Hints之后，对Block的查找很方便，特别是那些嵌套得很厉害的页面来讲。但是很少有人知道其实后台也可以开启这个功能，不过不是在管理页面打开，需要直接在表里面添加一条数据，像下面这样。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>`INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`)
+</span><span class='line'>       VALUES ('websites', '0', 'dev/debug/template_hints', '1');`</span></code></pre></td></tr></table></div></figure>
 
 
-	
-	
-	<section class="archives"><h1 class="year">2013</h1>
+<p>1表示开启，0表示关闭，当然，你把这条记录删掉也行。</p>
+</div>
 
-<article>
-	<h2 class="title"><a href="/blog/2013/05/28/enable-template-hints-in-magento-backend/">在Magento后台开启Hint</a></h2>
-	<div class="meta">
-		<div class="date">May 28</div>
-		<div class="tags">
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-28T11:56:00+08:00" pubdate data-updated="true">May 28<span>th</span>, 2013</time></div>
+	<div class="tags">
 
 
 	<a class='category' href='/blog/categories/magento/'>Magento</a>
 
 
 </div>
-	    
-	</div>
-</article>
-
 	
+</div></article>
 
-
-<article>
-	<h2 class="title"><a href="/blog/2013/04/15/add-custom-variables-in-email-template/">在Magento邮件模板中添加自定义变量</a></h2>
-	<div class="meta">
-		<div class="date">Apr 15</div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/magento/'>Magento</a>
-
-
-</div>
-	    
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
 	</div>
-</article>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
 
 </div>
 	<footer id="footer" class="inner">Copyright &copy; 2013

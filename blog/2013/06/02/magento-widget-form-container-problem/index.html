@@ -3,11 +3,12 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>Category: Magento - Bill</title>
+	<title>Magento Widget Form Container Problem - Bill</title>
 	<meta name="author" content="Bill Sion">
 
 	
-	<meta name="description" content="Category: Magento">
+	<meta name="description" content="当我在后台创建一个表单里，出现了下面这个错误： 1
+Fatal error: Call to a member function setData() on a non-object in app/code/core/Mage/Adminhtml/Block/Widget/Form/ &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -72,64 +73,68 @@
 	
 		
 	
-	<div id="content" class="inner">
-	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Magento Widget Form Container Problem</h2>
+	<div class="entry-content"><p>当我在后台创建一个表单里，出现了下面这个错误：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Fatal error: Call to a member function setData() on a non-object in app/code/core/Mage/Adminhtml/Block/Widget/Form/Container.php on line 129</span></code></pre></td></tr></table></div></figure>
 
 
-	
-	
-	<section class="archives"><h1 class="year">2013</h1>
+<p>我很花了些工夫来找出问题，在GOOGLE了一通后，我发现实际情况是Magento没有找到对应的 Form Container。</p>
 
-<article>
-	<h2 class="title"><a href="/blog/2013/06/02/magento-widget-form-container-problem/">Magento Widget Form Container Problem</a></h2>
-	<div class="meta">
-		<div class="date">Jun  2</div>
-		<div class="tags">
+<p>在Magento后台的开发过程是，Widget Forms 被用来编辑表单实体(entity)，你需要 Mage_Adminhtml_Block_Widget_Form_Container 来包含 Mage_Adminhtml_Block_Widget_Form ( 还有tabs )。</p>
+
+<p>通常情况下，Container 要找到一个 Form，它需要三个属性，像下面这样：</p>
+
+<ul>
+<li>protected $_blockGroup = &#8216;moduleName&#8217;;</li>
+<li>protected $_controller = &#8216;pathToModuleController&#8217;;</li>
+<li>protected $_mode = &#8216;edit&#8217;;</li>
+</ul>
+
+
+<p>这几个属性用来寻找表单，在父类中，真实情况是这样的：
+<code>$this-&gt;getLayout()-&gt;createBlock($this-&gt;_blockGroup . '/' . $this-&gt;_controller . '_' . $this-&gt;_mode . '_form')</code></p>
+
+<p>在我的例子里，它将会是这样&#8221;moduleName/pathToModuleController_edit_form&#8221;，这样就创建了一个Block实例。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-02T20:38:00+08:00" pubdate data-updated="true">Jun 2<span>nd</span>, 2013</time></div>
+	<div class="tags">
 
 
 	<a class='category' href='/blog/categories/magento/'>Magento</a>
 
 
 </div>
-	    
-	</div>
-</article>
-
 	
+</div></article>
 
-
-<article>
-	<h2 class="title"><a href="/blog/2013/05/28/enable-template-hints-in-magento-backend/">在Magento后台开启Hint</a></h2>
-	<div class="meta">
-		<div class="date">May 28</div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/magento/'>Magento</a>
-
-
-</div>
-	    
-	</div>
-</article>
-
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
 	
-
-
-<article>
-	<h2 class="title"><a href="/blog/2013/04/15/add-custom-variables-in-email-template/">在Magento邮件模板中添加自定义变量</a></h2>
-	<div class="meta">
-		<div class="date">Apr 15</div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/magento/'>Magento</a>
-
-
-</div>
-	    
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
 	</div>
-</article>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
 
 </div>
 	<footer id="footer" class="inner">Copyright &copy; 2013

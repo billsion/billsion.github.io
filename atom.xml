@@ -4,7 +4,7 @@
   <title><![CDATA[Bill]]></title>
   <link href="http://billsion.github.io/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-06-03T10:54:31+08:00</updated>
+  <updated>2013-06-03T11:38:48+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -12,6 +12,506 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[在Magento里面创建一个自定义路由]]></title>
+    <link href="http://billsion.github.io/blog/2013/06/03/create-a-custom-router-in-magento/"/>
+    <updated>2013-06-03T11:37:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/06/03/create-a-custom-router-in-magento</id>
+    <content type="html"><![CDATA[<p>本文译自<a href="http://inchoo.net/ecommerce/magento/custom-router-in-magento/">Inchoo</a></p>
+
+<p>当我们需要把业务逻辑从Magento默认的路由中区别开来，不受Magento默认路由的影响，创建一个自定义的路由功能就显得很方便了。</p>
+
+<p>那为什么我们不能为不同的逻辑创建不同的路由呢？</p>
+
+<p>让我来简单解释一下：在我的一个客户的项目中，我整合过一个 <code>OneStepCheckout</code> 的扩展，这个扩展重写了Magento核心的路由功能。我需要重写这些路由甚至要根据URL里的参数把它们分派到两个不同的控制器。基于这要的要求，我发现最节省时间的方法便是创建一个新路由，由它来根据不同的参数重定向到不同的控制器。</p>
+
+<p>我们来开始定义:</p>
+
+<p><strong>../app/code/local/Mynamespace/Myextension/etc/config.xml</strong>:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;default&gt;
+</span><span class='line'>   &lt;web&gt;
+</span><span class='line'>     &lt;routers&gt;
+</span><span class='line'>        &lt;myextension_myrouter&gt;
+</span><span class='line'>            &lt;area&gt;frontend&lt;/area&gt;
+</span><span class='line'>            &lt;class&gt;Mynamespace_Myextension_Controller_Router&lt;/class&gt;
+</span><span class='line'>        &lt;/myextension_myrouter&gt;
+</span><span class='line'>    &lt;/routers&gt;
+</span><span class='line'>   &lt;/web&gt;
+</span><span class='line'>  &lt;/default&gt;
+</span><span class='line'>&lt;/stores&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在 <strong>/app/code/local/Mynamespace/Myextension</strong>里创建一个新文件夹，名为 <strong>Controller</strong>。也创建一个PHP类: <strong>Mynamespace_Myextension_Controller_Router.php</strong>:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;?php
+</span><span class='line'>//Mynamespace_Myextension_Controller_Router.php
+</span><span class='line'>/**
+</span><span class='line'> * @author Darko Goleš &lt;darko.goles@inchoo.net&gt;
+</span><span class='line'> * Router for deciding to go on party checkout or regular onestepcheckout
+</span><span class='line'> */
+</span><span class='line'>class Mynemaspace_Myextension_Controller_Router extends Mage_Core_Controller_Varien_Router_Standard {
+</span><span class='line'>}
+</span><span class='line'>?&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>为了避免重复发明轮子，我们可以直接从已有的源代码<strong>Mage_Core_Controller_Varien_Router_Standard.php</strong>中复制出内容并粘贴到我们的文件里，同时作些修改:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>/**
+</span><span class='line'>   * Match the request
+</span><span class='line'>   *
+</span><span class='line'>   * @param Zend_Controller_Request_Http $request
+</span><span class='line'>   * @return boolean
+</span><span class='line'>   */
+</span><span class='line'>  public function match(Zend_Controller_Request_Http $request)
+</span><span class='line'>  {
+</span><span class='line'>      //checking before even try to find out that current module
+</span><span class='line'>      //should use this router
+</span><span class='line'>      if (!$this-&gt;_beforeModuleMatch()) {
+</span><span class='line'>          return false;
+</span><span class='line'>      }
+</span><span class='line'>      $this-&gt;fetchDefault();
+</span><span class='line'>      $front = $this-&gt;getFront();
+</span><span class='line'>      $path = trim($request-&gt;getPathInfo(), '/');
+</span><span class='line'>      if ($path) {
+</span><span class='line'>          $p = explode('/', $path);
+</span><span class='line'>      } else {
+</span><span class='line'>          $p = explode('/', $this-&gt;_getDefaultPath());
+</span><span class='line'>      }
+</span><span class='line'>      // get module name
+</span><span class='line'>      if ($request-&gt;getModuleName()) {
+</span><span class='line'>          $module = $request-&gt;getModuleName();
+</span><span class='line'>      } else {
+</span><span class='line'>          if (!empty($p[0])) {
+</span><span class='line'>              $module = $p[0];
+</span><span class='line'>          } else {
+</span><span class='line'>              $module = $this-&gt;getFront()-&gt;getDefault('module');
+</span><span class='line'>              $request-&gt;setAlias(Mage_Core_Model_Url_Rewrite::REWRITE_REQUEST_PATH_ALIAS, '');
+</span><span class='line'>          }
+</span><span class='line'>      }
+</span><span class='line'>      if (!$module) {
+</span><span class='line'>          if (Mage::app()-&gt;getStore()-&gt;isAdmin()) {
+</span><span class='line'>              $module = 'admin';
+</span><span class='line'>          } else {
+</span><span class='line'>              return false;
+</span><span class='line'>          }
+</span><span class='line'>      }
+</span><span class='line'>      /**
+</span><span class='line'>       * Searching router args by module name from route using it as key
+</span><span class='line'>       */
+</span><span class='line'>      $modules = $this-&gt;getModuleByFrontName($module);
+</span><span class='line'>      if ($modules === false) {
+</span><span class='line'>          return false;
+</span><span class='line'>      }
+</span><span class='line'>      //checkings after we foundout that this router should be used for current module
+</span><span class='line'>      if (!$this-&gt;_afterModuleMatch()) {
+</span><span class='line'>          return false;
+</span><span class='line'>      }
+</span><span class='line'>      /**
+</span><span class='line'>       * Going through modules to find appropriate controller
+</span><span class='line'>       */
+</span><span class='line'>      $found = false;
+</span><span class='line'>      foreach ($modules as $realModule) {
+</span><span class='line'>          $request-&gt;setRouteName($this-&gt;getRouteByFrontName($module));
+</span><span class='line'>          // get controller name
+</span><span class='line'>          if ($request-&gt;getControllerName()) {
+</span><span class='line'>              $controller = $request-&gt;getControllerName();
+</span><span class='line'>          } else {
+</span><span class='line'>              if (!empty($p[1])) {
+</span><span class='line'>                  $controller = $p[1];
+</span><span class='line'>              } else {
+</span><span class='line'>                  $controller = $front-&gt;getDefault('controller');
+</span><span class='line'>                  $request-&gt;setAlias(
+</span><span class='line'>                      Mage_Core_Model_Url_Rewrite::REWRITE_REQUEST_PATH_ALIAS,
+</span><span class='line'>                      ltrim($request-&gt;getOriginalPathInfo(), '/')
+</span><span class='line'>                  );
+</span><span class='line'>              }
+</span><span class='line'>          }
+</span><span class='line'>          // get action name
+</span><span class='line'>          if (empty($action)) {
+</span><span class='line'>              if ($request-&gt;getActionName()) {
+</span><span class='line'>                  $action = $request-&gt;getActionName();
+</span><span class='line'>              } else {
+</span><span class='line'>                  $action = !empty($p[2]) ? $p[2] : $front-&gt;getDefault('action');
+</span><span class='line'>              }
+</span><span class='line'>          }
+</span><span class='line'>          //checking if this place should be secure
+</span><span class='line'>          $this-&gt;_checkShouldBeSecure($request, '/'.$module.'/'.$controller.'/'.$action);
+</span><span class='line'>          $controllerClassName = $this-&gt;_validateControllerClassName($realModule, $controller);
+</span><span class='line'>          if (!$controllerClassName) {
+</span><span class='line'>              continue;
+</span><span class='line'>          }
+</span><span class='line'>          // instantiate controller class
+</span><span class='line'>          $controllerInstance = Mage::getControllerInstance($controllerClassName, $request, $front-&gt;getResponse());
+</span><span class='line'>          if (!$controllerInstance-&gt;hasAction($action)) {
+</span><span class='line'>              continue;
+</span><span class='line'>          }
+</span><span class='line'>          $found = true;
+</span><span class='line'>          break;
+</span><span class='line'>      }
+</span><span class='line'>      /**
+</span><span class='line'>       * if we did not found any siutibul
+</span><span class='line'>       */
+</span><span class='line'>      if (!$found) {
+</span><span class='line'>          if ($this-&gt;_noRouteShouldBeApplied()) {
+</span><span class='line'>              $controller = 'index';
+</span><span class='line'>              $action = 'noroute';
+</span><span class='line'>              $controllerClassName = $this-&gt;_validateControllerClassName($realModule, $controller);
+</span><span class='line'>              if (!$controllerClassName) {
+</span><span class='line'>                  return false;
+</span><span class='line'>              }
+</span><span class='line'>              // instantiate controller class
+</span><span class='line'>              $controllerInstance = Mage::getControllerInstance($controllerClassName, $request,
+</span><span class='line'>                  $front-&gt;getResponse());
+</span><span class='line'>              if (!$controllerInstance-&gt;hasAction($action)) {
+</span><span class='line'>                  return false;
+</span><span class='line'>              }
+</span><span class='line'>          } else {
+</span><span class='line'>              return false;
+</span><span class='line'>          }
+</span><span class='line'>      }
+</span><span class='line'>      // set values only after all the checks are done
+</span><span class='line'>      $request-&gt;setModuleName($module);
+</span><span class='line'>      $request-&gt;setControllerName($controller);
+</span><span class='line'>      $request-&gt;setActionName($action);
+</span><span class='line'>      $request-&gt;setControllerModule($realModule);
+</span><span class='line'>      // set parameters from pathinfo
+</span><span class='line'>      for ($i = 3, $l = sizeof($p); $i &lt; $l; $i += 2) {
+</span><span class='line'>          $request-&gt;setParam($p[$i], isset($p[$i+1]) ? urldecode($p[$i+1]) : '');
+</span><span class='line'>      }
+</span><span class='line'>      // dispatch action
+</span><span class='line'>      $request-&gt;setDispatched(true);
+</span><span class='line'>      $controllerInstance-&gt;dispatch($action);
+</span><span class='line'>      return true;
+</span><span class='line'>  }</span></code></pre></td></tr></table></div></figure>
+
+
+<p>打个比方，现在我想要根据&#8221;Party&#8221;是否定义来重定向路由到不同的控制器。&#8221;Party&#8221;是前缀，那么正常的控制器会是这样:
+<strong>Mynamespace/MyExtension/controllers/Somecontrollername.php</strong>
+加了&#8221;Party&#8221;之后的控制器会是这样:
+<strong>Mynamespace/MyExtension/controllers/</strong><em>Party</em><strong>/Somecontrollername.php</strong></p>
+
+<p>为了实现这个，让我们在上面的代码中57~62行加入下面的代码:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>//...
+</span><span class='line'>        $party_prefix = '';
+</span><span class='line'>        if ($this-&gt;isPartyOrder($request)) {
+</span><span class='line'>            foreach ($modules as $key =&gt; $realModule) {
+</span><span class='line'>                $modules[$key].='_Party';
+</span><span class='line'>            }
+</span><span class='line'>            $party_prefix = '_party';
+</span><span class='line'>        }
+</span><span class='line'>//...</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当然，我们的<code>isParty</code>方法会是这样:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>..
+</span><span class='line'>    /**
+</span><span class='line'>     * Determine if order is "Party order"
+</span><span class='line'>     * @param Mage_Core_Controller_Request_Http $request
+</span><span class='line'>     * @return boolean
+</span><span class='line'>     */
+</span><span class='line'>    private function isPartyOrder($request) {
+</span><span class='line'>        if (isset($_SESSION['is_party_checkout']) && $_SESSION['is_party_checkout']) {
+</span><span class='line'>            return true;
+</span><span class='line'>        }
+</span><span class='line'>        $pathInfo = $request-&gt;getPathInfo();
+</span><span class='line'>        if (stristr($pathInfo, 'onestepcheckout/index/index')) {
+</span><span class='line'>            $params = Mage::app()-&gt;getRequest()-&gt;getParams();
+</span><span class='line'>            if (isset($params['id'])) {
+</span><span class='line'>                return true;
+</span><span class='line'>            }
+</span><span class='line'>        }
+</span><span class='line'>        return false;
+</span><span class='line'>    }
+</span><span class='line'>..
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里这段代码检查了<code>Party</code>是按照Session排序还是按照GET里的顺序排序。</p>
+
+<p>按下来，我们将把下面的代码改一下，以便适应我们layout.xml里面用到的路由名字。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>/**
+</span><span class='line'>       * Going through modules to find appropriate controller
+</span><span class='line'>       */
+</span><span class='line'>      $found = false;
+</span><span class='line'>      foreach ($modules as $realModule) {
+</span><span class='line'>          $request-&gt;setRouteName($this-&gt;getRouteByFrontName($module));</span></code></pre></td></tr></table></div></figure>
+
+
+<p>…我们只改一行:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>//...
+</span><span class='line'>        /**
+</span><span class='line'>         * Going through modules to find appropriate controller
+</span><span class='line'>         */
+</span><span class='line'>        $found = false;
+</span><span class='line'>        foreach ($modules as $realModule) {
+</span><span class='line'>            $request-&gt;setRouteName('ourextension_' . $this-&gt;getRouteByFrontName($module) . $party_prefix);
+</span><span class='line'>        ...
+</span><span class='line'>//...</span></code></pre></td></tr></table></div></figure>
+
+
+<p>现在我们可以在layout.xml文件里定义我们的layaout处理带&#8221;Party&#8221;的控制器和带规控制器:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;?xml version="1.0"?&gt;
+</span><span class='line'>&lt;layout version="0.1.0"&gt;
+</span><span class='line'>    &lt;ourmodule_controllername_actionname&gt;
+</span><span class='line'>      &lt;block ....... some layout updates ... etc
+</span><span class='line'>    &lt;/ourmodule_controllername_actionname&gt;
+</span><span class='line'>   &lt;ourmodule_party_controllername_actionname&gt;
+</span><span class='line'>      &lt;block ....... some different layout updates ... etc
+</span><span class='line'>   &lt;/ourmodule_party_controllername_actionname&gt;
+</span><span class='line'>&lt;/layout&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这样的话，就可以完完全全将两种情况分开来处理了。</p>
+
+<p>这里只是个展示怎么创建和修改自定义路由的小例子，你可以根据实际情况将路由写成自己需要的那样。</p>
+
+<p>让我们再来看看我写的模块里<code>config.xml</code>里面，路由是怎么和<code>Onestepcheckout</code>交互的:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;frontend&gt;
+</span><span class='line'>        &lt;routers&gt;
+</span><span class='line'>            &lt;onestepcheckout&gt;
+</span><span class='line'>                &lt;use&gt;myextension_myrouter&lt;/use&gt;
+</span><span class='line'>                &lt;args&gt;
+</span><span class='line'>                    &lt;modules&gt;
+</span><span class='line'>                        &lt;Mynamespace_Mymodule before="Idev_OneStepCheckout"&gt;Mynamespace_Mymodule_Onestepcheckout&lt;/Mynamespace_Mymodule&gt;
+</span><span class='line'>                    &lt;/modules&gt;
+</span><span class='line'>                &lt;/args&gt;
+</span><span class='line'>            &lt;/onestepcheckout&gt;
+</span><span class='line'>        &lt;/routers&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>现在的问题便是:
+<code>Onestepcheckout</code>模块重写了Magento的核心路由，所以当用户访问 <code>checkout/onepage</code> 的地址时，他们将会被定向到<code>Onepagecheckout</code>的URL。</p>
+
+<p>当我像上面这样创建了自定义路由之后，用户将仍然访问<code>Onepagecheckout</code>的路由，除非有&#8221;Party&#8221;。</p>
+
+<p>因为这两次请求（Party或是常规）都是同一文件，我们只是在我们的路由设置里设置了不同的路由名字，所以我们可以在layout里面用到不同的处理。</p>
+
+<p>I know this seems a little bit messy for one reading, but I hope somebody will find this post useful for own projects and extension integrations and customizations. Cheers.</p>
+
+<p>我知道把不同的请求放入一个文件里看起来有些混乱，但我希望此文起到一个抛砖引玉的作用，有人能够看到此文中有用的地方并用到自己的项目里。</p>
+
+<p>谢谢。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[理解Magento中序例化Block]]></title>

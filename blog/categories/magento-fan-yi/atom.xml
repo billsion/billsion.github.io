@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Magento,翻译 | Bill]]></title>
+  <link href="http://billsion.github.io/blog/categories/magento-fan-yi/atom.xml" rel="self"/>
+  <link href="http://billsion.github.io/"/>
+  <updated>2013-06-03T11:38:48+08:00</updated>
+  <id>http://billsion.github.io/</id>
+  <author>
+    <name><![CDATA[Bill Sion]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[在Magento里面创建一个自定义路由]]></title>
+    <link href="http://billsion.github.io/blog/2013/06/03/create-a-custom-router-in-magento/"/>
+    <updated>2013-06-03T11:37:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/06/03/create-a-custom-router-in-magento</id>
+    <content type="html"><![CDATA[<p>本文译自<a href="http://inchoo.net/ecommerce/magento/custom-router-in-magento/">Inchoo</a></p>
+
+<p>当我们需要把业务逻辑从Magento默认的路由中区别开来，不受Magento默认路由的影响，创建一个自定义的路由功能就显得很方便了。</p>
+
+<p>那为什么我们不能为不同的逻辑创建不同的路由呢？</p>
+
+<p>让我来简单解释一下：在我的一个客户的项目中，我整合过一个 <code>OneStepCheckout</code> 的扩展，这个扩展重写了Magento核心的路由功能。我需要重写这些路由甚至要根据URL里的参数把它们分派到两个不同的控制器。基于这要的要求，我发现最节省时间的方法便是创建一个新路由，由它来根据不同的参数重定向到不同的控制器。</p>
+
+<p>我们来开始定义:</p>
+
+<p><strong>../app/code/local/Mynamespace/Myextension/etc/config.xml</strong>:</p>
+
+<p>```
+<default>
+   <web></p>
+
+<pre><code> &lt;routers&gt;
+    &lt;myextension_myrouter&gt;
+        &lt;area&gt;frontend&lt;/area&gt;
+        &lt;class&gt;Mynamespace_Myextension_Controller_Router&lt;/class&gt;
+    &lt;/myextension_myrouter&gt;
+&lt;/routers&gt;
+</code></pre>
+
+<p>   </web>
+  </default>
+</stores>
+```</p>
+
+<p>在 <strong>/app/code/local/Mynamespace/Myextension</strong>里创建一个新文件夹，名为 <strong>Controller</strong>。也创建一个PHP类: <strong>Mynamespace_Myextension_Controller_Router.php</strong>:</p>
+
+<p><code>
+&lt;?php
+//Mynamespace_Myextension_Controller_Router.php
+/**
+ * @author Darko Goleš &lt;darko.goles@inchoo.net&gt;
+ * Router for deciding to go on party checkout or regular onestepcheckout
+ */
+class Mynemaspace_Myextension_Controller_Router extends Mage_Core_Controller_Varien_Router_Standard {
+}
+?&gt;
+</code>
+为了避免重复发明轮子，我们可以直接从已有的源代码<strong>Mage_Core_Controller_Varien_Router_Standard.php</strong>中复制出内容并粘贴到我们的文件里，同时作些修改:</p>
+
+<p>```
+/<em>*
+   * Match the request
+   *
+   * @param Zend_Controller_Request_Http $request
+   * @return boolean
+   </em>/
+  public function match(Zend_Controller_Request_Http $request)
+  {</p>
+
+<pre><code>  //checking before even try to find out that current module
+  //should use this router
+  if (!$this-&gt;_beforeModuleMatch()) {
+      return false;
+  }
+  $this-&gt;fetchDefault();
+  $front = $this-&gt;getFront();
+  $path = trim($request-&gt;getPathInfo(), '/');
+  if ($path) {
+      $p = explode('/', $path);
+  } else {
+      $p = explode('/', $this-&gt;_getDefaultPath());
+  }
+  // get module name
+  if ($request-&gt;getModuleName()) {
+      $module = $request-&gt;getModuleName();
+  } else {
+      if (!empty($p[0])) {
+          $module = $p[0];
+      } else {
+          $module = $this-&gt;getFront()-&gt;getDefault('module');
+          $request-&gt;setAlias(Mage_Core_Model_Url_Rewrite::REWRITE_REQUEST_PATH_ALIAS, '');
+      }
+  }
+  if (!$module) {
+      if (Mage::app()-&gt;getStore()-&gt;isAdmin()) {
+          $module = 'admin';
+      } else {
+          return false;
+      }
+  }
+  /**
+   * Searching router args by module name from route using it as key
+   */
+  $modules = $this-&gt;getModuleByFrontName($module);
+  if ($modules === false) {
+      return false;
+  }
+  //checkings after we foundout that this router should be used for current module
+  if (!$this-&gt;_afterModuleMatch()) {
+      return false;
+  }
+  /**
+   * Going through modules to find appropriate controller
+   */
+  $found = false;
+  foreach ($modules as $realModule) {
+      $request-&gt;setRouteName($this-&gt;getRouteByFrontName($module));
+      // get controller name
+      if ($request-&gt;getControllerName()) {
+          $controller = $request-&gt;getControllerName();
+      } else {
+          if (!empty($p[1])) {
+              $controller = $p[1];
+          } else {
+              $controller = $front-&gt;getDefault('controller');
+              $request-&gt;setAlias(
+                  Mage_Core_Model_Url_Rewrite::REWRITE_REQUEST_PATH_ALIAS,
+                  ltrim($request-&gt;getOriginalPathInfo(), '/')
+              );
+          }
+      }
+      // get action name
+      if (empty($action)) {
+          if ($request-&gt;getActionName()) {
+              $action = $request-&gt;getActionName();
+          } else {
+              $action = !empty($p[2]) ? $p[2] : $front-&gt;getDefault('action');
+          }
+      }
+      //checking if this place should be secure
+      $this-&gt;_checkShouldBeSecure($request, '/'.$module.'/'.$controller.'/'.$action);
+      $controllerClassName = $this-&gt;_validateControllerClassName($realModule, $controller);
+      if (!$controllerClassName) {
+          continue;
+      }
+      // instantiate controller class
+      $controllerInstance = Mage::getControllerInstance($controllerClassName, $request, $front-&gt;getResponse());
+      if (!$controllerInstance-&gt;hasAction($action)) {
+          continue;
+      }
+      $found = true;
+      break;
+  }
+  /**
+   * if we did not found any siutibul
+   */
+  if (!$found) {
+      if ($this-&gt;_noRouteShouldBeApplied()) {
+          $controller = 'index';
+          $action = 'noroute';
+          $controllerClassName = $this-&gt;_validateControllerClassName($realModule, $controller);
+          if (!$controllerClassName) {
+              return false;
+          }
+          // instantiate controller class
+          $controllerInstance = Mage::getControllerInstance($controllerClassName, $request,
+              $front-&gt;getResponse());
+          if (!$controllerInstance-&gt;hasAction($action)) {
+              return false;
+          }
+      } else {
+          return false;
+      }
+  }
+  // set values only after all the checks are done
+  $request-&gt;setModuleName($module);
+  $request-&gt;setControllerName($controller);
+  $request-&gt;setActionName($action);
+  $request-&gt;setControllerModule($realModule);
+  // set parameters from pathinfo
+  for ($i = 3, $l = sizeof($p); $i &lt; $l; $i += 2) {
+      $request-&gt;setParam($p[$i], isset($p[$i+1]) ? urldecode($p[$i+1]) : '');
+  }
+  // dispatch action
+  $request-&gt;setDispatched(true);
+  $controllerInstance-&gt;dispatch($action);
+  return true;
+</code></pre>
+
+<p>  }
+```</p>
+
+<p>打个比方，现在我想要根据"Party"是否定义来重定向路由到不同的控制器。"Party"是前缀，那么正常的控制器会是这样:
+<strong>Mynamespace/MyExtension/controllers/Somecontrollername.php</strong>
+加了"Party"之后的控制器会是这样:
+<strong>Mynamespace/MyExtension/controllers/</strong><em>Party</em><strong>/Somecontrollername.php</strong></p>
+
+<p>为了实现这个，让我们在上面的代码中57~62行加入下面的代码:</p>
+
+<p>```
+//...</p>
+
+<pre><code>    $party_prefix = '';
+    if ($this-&gt;isPartyOrder($request)) {
+        foreach ($modules as $key =&gt; $realModule) {
+            $modules[$key].='_Party';
+        }
+        $party_prefix = '_party';
+    }
+</code></pre>
+
+<p>//...
+```</p>
+
+<p>当然，我们的<code>isParty</code>方法会是这样:</p>
+
+<p>```
+..</p>
+
+<pre><code>/**
+ * Determine if order is "Party order"
+ * @param Mage_Core_Controller_Request_Http $request
+ * @return boolean
+ */
+private function isPartyOrder($request) {
+    if (isset($_SESSION['is_party_checkout']) &amp;&amp; $_SESSION['is_party_checkout']) {
+        return true;
+    }
+    $pathInfo = $request-&gt;getPathInfo();
+    if (stristr($pathInfo, 'onestepcheckout/index/index')) {
+        $params = Mage::app()-&gt;getRequest()-&gt;getParams();
+        if (isset($params['id'])) {
+            return true;
+        }
+    }
+    return false;
+}
+</code></pre>
+
+<p>..</p>
+
+<p>```</p>
+
+<p>这里这段代码检查了<code>Party</code>是按照Session排序还是按照GET里的顺序排序。</p>
+
+<p>按下来，我们将把下面的代码改一下，以便适应我们layout.xml里面用到的路由名字。</p>
+
+<p>```
+/**</p>
+
+<pre><code>   * Going through modules to find appropriate controller
+   */
+  $found = false;
+  foreach ($modules as $realModule) {
+      $request-&gt;setRouteName($this-&gt;getRouteByFrontName($module));
+</code></pre>
+
+<p>```</p>
+
+<p>…我们只改一行:</p>
+
+<p>```
+//...</p>
+
+<pre><code>    /**
+     * Going through modules to find appropriate controller
+     */
+    $found = false;
+    foreach ($modules as $realModule) {
+        $request-&gt;setRouteName('ourextension_' . $this-&gt;getRouteByFrontName($module) . $party_prefix);
+    ...
+</code></pre>
+
+<p>//...
+```</p>
+
+<p>现在我们可以在layout.xml文件里定义我们的layaout处理带"Party"的控制器和带规控制器:</p>
+
+<p>```
+&lt;?xml version="1.0"?>
+<layout version="0.1.0"></p>
+
+<pre><code>&lt;ourmodule_controllername_actionname&gt;
+  &lt;block ....... some layout updates ... etc
+&lt;/ourmodule_controllername_actionname&gt;
+</code></pre>
+
+<p>   <ourmodule_party_controllername_actionname></p>
+
+<pre><code>  &lt;block ....... some different layout updates ... etc
+</code></pre>
+
+<p>   </ourmodule_party_controllername_actionname>
+</layout>
+```</p>
+
+<p>这样的话，就可以完完全全将两种情况分开来处理了。</p>
+
+<p>这里只是个展示怎么创建和修改自定义路由的小例子，你可以根据实际情况将路由写成自己需要的那样。</p>
+
+<p>让我们再来看看我写的模块里<code>config.xml</code>里面，路由是怎么和<code>Onestepcheckout</code>交互的:</p>
+
+<p>```
+<frontend></p>
+
+<pre><code>    &lt;routers&gt;
+        &lt;onestepcheckout&gt;
+            &lt;use&gt;myextension_myrouter&lt;/use&gt;
+            &lt;args&gt;
+                &lt;modules&gt;
+                    &lt;Mynamespace_Mymodule before="Idev_OneStepCheckout"&gt;Mynamespace_Mymodule_Onestepcheckout&lt;/Mynamespace_Mymodule&gt;
+                &lt;/modules&gt;
+            &lt;/args&gt;
+        &lt;/onestepcheckout&gt;
+    &lt;/routers&gt;
+</code></pre>
+
+<p>```</p>
+
+<p>现在的问题便是:
+<code>Onestepcheckout</code>模块重写了Magento的核心路由，所以当用户访问 <code>checkout/onepage</code> 的地址时，他们将会被定向到<code>Onepagecheckout</code>的URL。</p>
+
+<p>当我像上面这样创建了自定义路由之后，用户将仍然访问<code>Onepagecheckout</code>的路由，除非有"Party"。</p>
+
+<p>因为这两次请求（Party或是常规）都是同一文件，我们只是在我们的路由设置里设置了不同的路由名字，所以我们可以在layout里面用到不同的处理。</p>
+
+<p>I know this seems a little bit messy for one reading, but I hope somebody will find this post useful for own projects and extension integrations and customizations. Cheers.</p>
+
+<p>我知道把不同的请求放入一个文件里看起来有些混乱，但我希望此文起到一个抛砖引玉的作用，有人能够看到此文中有用的地方并用到自己的项目里。</p>
+
+<p>谢谢。</p>
+]]></content>
+  </entry>
+  
+</feed>

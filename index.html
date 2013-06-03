@@ -7,8 +7,7 @@
 	<meta name="author" content="Bill Sion">
 
 	
-	<meta name="description" content="当我在后台创建一个表单里，出现了下面这个错误： 1
-Fatal error: Call to a member function setData() on a non-object in app/code/core/Mage/Adminhtml/Block/Widget/Form/ &hellip;">
+	<meta name="description" content="本文译自: magebase.com 多选框的不足之处 在电商平台上，很多情况下都存在一对多的关系。举几个熟悉的例子，像追加销售，交叉销售，相关产品这些情况。一个产品可能会对应不只一个促销。我们用追加销售来打比方，一个产品可以对应多个作为追加销售存在的产品。 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -79,9 +78,312 @@ Fatal error: Call to a member function setData() on a non-object in app/code/cor
     <article class="post">
 	<h2 class="title">
 		
+		<a href="/blog/2013/06/03/understanding-the-grid-serializer-block/">
+		
+			理解Magento中序例化Block</a>
+	</h2>
+	<div class="entry-content">
+		<p>本文译自: <a href="http://magebase.com/magento-tutorials/understanding-the-grid-serializer-block/">magebase.com</a></p>
+
+<h3>多选框的不足之处</h3>
+
+<p>在电商平台上，很多情况下都存在一对多的关系。举几个熟悉的例子，像追加销售，交叉销售，相关产品这些情况。一个产品可能会对应不只一个促销。我们用追加销售来打比方，一个产品可以对应多个作为追加销售存在的产品。 通常情况下是在表单或是管理页面中使用多选框来管理此类数据或是关系，但是这样有几个不足：</p>
+
+<ol>
+<li>只能显示产品的一个属性。在这个例子中，我们只能显示产品名字在多选框里，但是要显示如SKU或是价格之类的属性的话，就不是那么容易就能办到的。</li>
+<li>用户只能选择多个产品，仅仅是选中，对额外数据无能为力。在这个例子中，表单只能提交选中的产品，但对各个选中产品的排列位置无能为力。</li>
+<li>数据量的增多会导制选项增多，多选框会变得庞大，难以管理。</li>
+<li>不能排序或是过滤，用户在找特定选项的时候会很困难。</li>
+</ol>
+
+
+<h3>作为表单元素的表格组件</h3>
+
+<p>为了克服多选框的局限性，我们需要有一个高级的表单元素，它应该包含如下功能：</p>
+
+<ol>
+<li>可以正选/反选多个实体。</li>
+<li>可以显示实体更多的信息。</li>
+<li>可以保存用户输入的额外数据。</li>
+<li>当数据量大的情况下，支持分页。</li>
+<li>支持复杂排序和过滤。</li>
+<li>格式应该统一，这样一来可以用在不同的实体或是不同的数据。</li>
+</ol>
+
+
+<p>幸运的是，Magento自带一些非常有意思的管理组件，特别是涉汲到后台插件的开发。这些组件太强大了，开发人员只需要写很少的代码或是&#8217;不&#8217;写模板便能创建出很直观的页面了。</p>
+
+<p>其中一个组件便是“表格”。 它内置了分页，排序和过滤。表格组件广泛用于后台管理界面，比如用来显示产品，订单，发票，注册用户等。但是我最中意的使 用便是作为表单元素。Magento提供了一个非常完美的解决方案用来克服之前说到的那些个不足，什么一对多啊之类的。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$this-&gt;addColumn('in_products', array(
+</span><span class='line'>    'header_css_class' =&gt; 'a-center',
+</span><span class='line'>    'type'            =&gt; 'checkbox',
+</span><span class='line'>    'name'            =&gt; 'in_products',
+</span><span class='line'>    'values'          =&gt; $this-&gt;_getSelectedProducts(),
+</span><span class='line'>    'align'           =&gt; 'center',
+</span><span class='line'>    'index'           =&gt; 'entity_id'
+</span><span class='line'> ));
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当用表格作为表单元素来替代多选框时，正常情况下，第一列的类型应该设为&#8217;checkbox&#8217;。这样一来，表格的每一行的第一列都会显示为checkbox。用户也就可以更好的选中他们想选择的数据。用此种方法进行多选比使用老式的多选框有效率多了。</p>
+
+<h3>AJAX之间数据的可持久性</h3>
+
+<p>第一眼看，此种机制堪称完美。但，表格同样也有分页，排序和过滤。每次执行其中的操作时，表格就通过AJAX调用进行重新加载，每次表格重新加载，之前选中的实体便会丢失。打个比方，我们正在选择追加销售商品，我们通过表格第一列的checkbo选中三个产品。现在，我们点击&#8217;下一页&#8217;链接来加载下一页的产品，或者同时在这个页面也选3个产品。然后，我们点击&#8217;上一页&#8217;链接回到之前的页。我们会发现之前选中的3个产品没有被选中，执行排序或是过滤也会导制同样的问题。所以讲，当表格组件搞定了老式多选框的不足后，诸如分页，过滤或是排序这类的操作会导制数据持久性的新问题。</p>
+
+<h3>序列化Block是如何处理数据的可持久性问题</h3>
+
+<p>Magento提供了另外一种Block叫作&#8217;Serializer Block&#8217;(序列化Block)，用它来处理选中数据的持久性问题。这种Block通常情况下会添加在表格Block的后面。该Block包含一个隐藏域和一个序列化过的JS对象。经过序列化的JS对象使用表格JS对象来得到选中的行。然后再序列化，像这样: key1=value1&amp;key2=value2&amp;…，再把经过序列化后的值赋给隐藏域。因为这个Block并没有嵌套在表格Block里面，所以即使是通过AJAX方式重新加载了表格Block，但是值被保存了下来。这个经过序列化过后的值，作为表单的一部分提交，在PHP端则通过 <code>parse_str()</code>函数来反序列化。</p>
+
+<p>不管怎么说，表单元素不光是用来存储用户输入的数据，同时也要显示之前已经保存过的数据。打个比方，当我们在文本框里填写了一些文本，那么我们填写的内容就会显示在里面。当我们从下拉框里面选中了任何一项，那么它就会默认显示我们选中的选项。同理，在此表格组件中也应该能显示选中的行。换句话讲，选中的行应该在第一列的checkbox里标记为checked。</p>
+
+<p>因此，序列化的JS对象在观察者事件观察表格的JS对象行为。所以当一个表格Block重载的时候，序列化的JS对象自动选中我们之前已经选中的行。</p>
+
+<p>那么，基于以上这些理论，我们可以把注意力放在怎么用这些知识去打造一个自定义的后台表格系统。</p>
+
+<h3>使用序列化表格Block</h3>
+
+<p>Magento提供了一个内置的库用来创建自定义表格和序列化Block。我们用追加销售表格来分析理解一下它是怎么工作的。</p>
+
+<p>在产品的编辑页面，左侧有一标签-追加销售。标签内容是通过AJAX加载。点击标签访问这个Action: Mage_Adminhtml_Catalog_ProductController::upsellAction()。</p>
+
+<p>那么该行为的布局就定义在下面的布局文件里 <code>app/design/adminhtml/default/default/catalog.xml</code></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;adminhtml_catalog_product_upsell&gt;
+</span><span class='line'>    &lt;block type="core/text_list" name="root"&gt;
+</span><span class='line'>        &lt;block type="adminhtml/catalog_product_edit_tab_upsell" name="catalog.product.edit.tab.upsell"/&gt;
+</span><span class='line'>        &lt;block type="adminhtml/widget_grid_serializer" name="upsell_grid_serializer"&gt;
+</span><span class='line'>            &lt;reference name="upsell_grid_serializer"&gt;
+</span><span class='line'>                &lt;action method="initSerializerBlock"&gt;
+</span><span class='line'>                    &lt;grid_block_name&gt;catalog.product.edit.tab.upsell&lt;/grid_block_name&gt;
+</span><span class='line'>                    &lt;data_callback&gt;getSelectedUpsellProducts&lt;/data_callback&gt;
+</span><span class='line'>                    &lt;hidden_input_name&gt;links[upsell]&lt;/hidden_input_name&gt;
+</span><span class='line'>                    &lt;reload_param_name&gt;products_upsell&lt;/reload_param_name&gt;
+</span><span class='line'>                &lt;/action&gt;
+</span><span class='line'>                &lt;action method="addColumnInputName"&gt;
+</span><span class='line'>                    &lt;input_name&gt;position&lt;/input_name&gt;
+</span><span class='line'>                &lt;/action&gt;
+</span><span class='line'>            &lt;/reference&gt;
+</span><span class='line'>        &lt;/block&gt;
+</span><span class='line'>    &lt;/block&gt;
+</span><span class='line'>&lt;/adminhtml_catalog_product_upsell&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里，Block根节点是 core/text_list 类型。所以所有的子节点全都都按照顺序渲染。请看<a href="http://magebase.com/magento-tutorials/demystifying-magentos-layout-xml-part-1/">Demystifying Magento’s Layout XML Part 1</a>。</p>
+
+<p>第一个子Block <code>catalog.product.edit.tab.upsell</code> 是 <code>adminhtml/catalog_product_edit_tab_upsell</code>类型，继承自 <code>Mage_Adminhtml_Block_Widget_Grid</code>。所以它创建了一个表格。第二个子Block <code>adminhtml/widget_grid_serializer</code> 是 <code>adminhtml/widget_grid_serializer</code> 类型，此类型是序列化Block。就像我们之前提到的，序列化Block是会添加到表格Block后面。</p>
+
+<p>在XML布局文件中，拿序列化Block打比方，<code>方法 initSerializerBlock有如下几个参数:</code></p>
+
+<ol>
+<li>grid_block_name: 在布局文件中定义表格Block的名字，在我们的例子中叫作 <code>catalog.product.edit.tab.upsell</code>.</li>
+<li>dta_callback: 该参数定义了一个方法，用来取到已选中的数据，并填写在表格Block里。</li>
+<li>hidden_input_name: 隐藏域，从POST表单中取得提交的值。在我们的例子里是 links[upsell]。</li>
+<li>reload_param_name: 该参数定义了当表格Block通过AJAX分页/过滤/排序等操作时，checkbox的表单名，在我们的例子里是 <code>products_upsell</code>。</li>
+</ol>
+
+
+<p>当序列化Block初始化的时候，它会调用在 data_callback 里定义的方法用来得到初始数据，填入表格Block。在我们的例子中，这个方法为 <code>getSelectedUpsellProducts()</code>。下面便是追加销售表格Block里的相关代码:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>public function getSelectedUpsellProducts()
+</span><span class='line'>{
+</span><span class='line'>    $products = array();
+</span><span class='line'>    foreach (Mage::registry('current_product')-&gt;getUpSellProducts() as $product) {
+</span><span class='line'>        $products[$product-&gt;getId()] = array('position' =&gt; $product-&gt;getPosition());
+</span><span class='line'>    }
+</span><span class='line'>    return $products;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里，该方法返回所有已经存储了的追加销售产品。序列化JS对象把这个返回值存到序列化元素里。基本上，当我们的表格第一次加载的时候，序列化把所有存储在数据库里的数据标记为选中。</p>
+
+<p>在表格Block中，受保护方法(protected)_prepareCoumns()用来定义列。那么追加销售表格Block的第一列就标记为checkbox:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$this-&gt;addColumn('in_products', array(
+</span><span class='line'>  'header_css_class' =&gt; 'a-center',
+</span><span class='line'>  'type' =&gt; 'checkbox',
+</span><span class='line'>  'name' =&gt; 'in_products',
+</span><span class='line'>  'values' =&gt; $this-&gt;_getSelectedProducts(),
+</span><span class='line'>  'align' =&gt; 'center',
+</span><span class='line'>  'index' =&gt; 'entity_id'
+</span><span class='line'>));</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这里，类型(type)被定义为 <code>checkbox</code>，所以说每一行的这一列将会被显示checkbox。values定义了checkbox的值，以此类推。产品ID对应的checkboxs应该被选中。这里<code>$this-&gt;_getSelectedProducts()</code>方法用来取得选中的数据。</p>
+
+<p>在追加销售产品Block里面还有一个方法 <code>getGridUrl()</code>:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>public function getGridUrl() {
+</span><span class='line'>  return $this-&gt;_getData('grid_url') ? $this-&gt;_getData('grid_url') : $this-&gt;getUrl('*/*/upsellGrid', array('_current'=&gt;true));
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该方法定义了通过AJAX进行诸如分页，排序，过滤的操作时调用的URL。这个URL应该仅仅只是返回表格Block，而不会包含另外其它的Block，比如说是序列化Block。</p>
+
+<p>该URL里面方法的实体如下所示:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>public function upsellGridAction() {
+</span><span class='line'>  $this-&gt;_initProduct();
+</span><span class='line'>  $this-&gt;loadLayout();
+</span><span class='line'>  $this-&gt;getLayout()-&gt;getBlock('catalog.product.edit.tab.upsell')
+</span><span class='line'>  -&gt;setProductsUpsell($this-&gt;getRequest()-&gt;getPost('products_upsell', null));
+</span><span class='line'>  $this-&gt;renderLayout();
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该方法对应的布局XML如下:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;adminhtml_catalog_product_upsellgrid&gt;
+</span><span class='line'>  &lt;block type="core/text_list" name="root"&gt;
+</span><span class='line'>      &lt;block type="adminhtml/catalog_product_edit_tab_upsell" name="catalog.product.edit.tab.upsell"/&gt;
+</span><span class='line'>  &lt;/block&gt;
+</span><span class='line'>&lt;/adminhtml_catalog_product_upsellgrid&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>序列化Block添加了一个隐藏域名为<code>hidden_input_name</code>。当用户选择了任意一行，序列化数据将会被存储到该隐藏域。当用户浏览下/上一页，排序或是过滤数据时，表格通过AJAX加载，选中的数据作为名为<code>reload_param_name</code>的参数通过AJAX来传递。<code>reload_param_name</code>这里是设为<code>products_upsell</code>。在之前提到的方法<code>upsellGridAction()</code>里，POST提交过来的<code>products_upsell</code>是通过<code>setProductsUpsell()</code>方法传递和取得的，并显示在追加销售Blcok实例里。所以说，调用<code>getProductsUpsell()</code>方法将会返回之前选中的数据。</p>
+
+<p>我之前有提到过<code>$this-&gt;_getSelectedProducts()</code>是用来得到选中的数据。下面是该方法的内容:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>protected function _getSelectedProducts() {
+</span><span class='line'>  $products = $this-&gt;getProductsUpsell();
+</span><span class='line'>  if (!is_array($products)) {
+</span><span class='line'>      $products = array_keys($this-&gt;getSelectedUpsellProducts());
+</span><span class='line'>  }
+</span><span class='line'>  return $products;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>之前有提到过，可以通过调用追加销售Block实例里的<code>getProductsUpsell()</code>方法来得到选中的数据。在这个方法里，首先试着通过调用这个方法取得数据。但是在我们的例子里，我们正在试图编辑一个产品，并且，在点击追加销售产品标签后，右侧内容加载以来，我们没有做任何改动，这个表格应该显示数据库里已经保存过的数据为选中。不管怎么说，如果没有选过任何产品，表格会通过调用<code>$this-&gt;getSelectedUpsellProducts()</code>来取得之前保存过的数据。</p>
+
+<p>最后，当产品表单提交后，可以通过POST对象的<code>hidden_input_name</code>来取得选中的数据，在我们的例子里是<code>links[upsell]</code>。这个数据仍然是序例化格式的，Magento提供了一个Helper方法来解码这个数据: <code>Mage::helper('adminhtml/js')-&gt;decodeGridSerializedInput()</code>。</p>
+
+<p>产品控制器在执行真正的保存操作之前会调用<code>_initSave()</code>方法。这个方法就是用来解码序例化数据:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$links = $this-&gt;getRequest()-&gt;getPost('links');
+</span><span class='line'>…
+</span><span class='line'>if ( isset($links['upsell']) && !$product-&gt;getUpsellReadonly() ) {
+</span><span class='line'>  $product-&gt;setUpsellLinkData(Mage::helper('adminhtml/js')-&gt;decodeGridSerializeInput($links['upsell']));`</span></code></pre></td></tr></table></div></figure>
+
+
+<p>最后，总结一下，完整的表格序列化Block执行过程按顺序如下:
+1. 初始化，表格和序例华Block加载。
+2. 当序例化Block初始完成后，会加载已保存的数据，并将它以序例化格式存在一个隐藏域中，并以选中的形式显示在表格Block里。
+3. 用户执行的任何修改都将同时在隐藏域里反应出来。
+4. 分页/排序/过滤等操作只会加载表格，而不是整个序例华Block，这样我们的数据就不会丢失。
+5. 当重新载入的时候，选中的数据会通过AJAX以POST的方式传递。
+6. 表格Block会试着从POST里取得数据，如果没有，会取得数据库中已经保存过的数据。
+7. 当表单提交后，选中的数据以序例华的方式传递。
+8. 最后，解码选中的数据并 存储到数据里。</p>
+
+<h3>总结</h3>
+
+<p>在这篇文章里，我们拿追加销售产品作为例子来分析怎么组合使用表格和序例化Block来作为传统多选框的替代方案。在该系例的下一篇文章里，我将会描述更多关于表格序例化的高级功能，这些功能可以创建更大，用户界面更友好的自定义widgets。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-03T10:49:00+08:00" pubdate data-updated="true">Jun 3<span>rd</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/magento/'>Magento</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>
+
+
+</div>
+	
+</div></article>
+
+
+    <article class="post">
+	<h2 class="title">
+		
 		<a href="/blog/2013/06/02/magento-widget-form-container-problem/">
 		
-			Magento Widget Form Container Problem</a>
+			Magento Widget Form Container 错误</a>
 	</h2>
 	<div class="entry-content">
 		<p>当我在后台创建一个表单里，出现了下面这个错误：</p>
@@ -316,7 +618,7 @@ Fatal error: Call to a member function setData() on a non-object in app/code/cor
 	<div class="tags">
 
 
-	<a class='category' href='/blog/categories/magento/'>Magento,</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>
+	<a class='category' href='/blog/categories/magento/'>Magento</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>
 
 
 </div>

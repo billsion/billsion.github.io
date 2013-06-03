@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Magento | Bill]]></title>
   <link href="http://billsion.github.io/blog/categories/magento/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-06-02T20:41:09+08:00</updated>
+  <updated>2013-06-03T10:54:31+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -14,7 +14,241 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Magento Widget Form Container Problem]]></title>
+    <title type="html"><![CDATA[理解Magento中序例化Block]]></title>
+    <link href="http://billsion.github.io/blog/2013/06/03/understanding-the-grid-serializer-block/"/>
+    <updated>2013-06-03T10:49:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/06/03/understanding-the-grid-serializer-block</id>
+    <content type="html"><![CDATA[<p>本文译自: <a href="http://magebase.com/magento-tutorials/understanding-the-grid-serializer-block/">magebase.com</a></p>
+
+<h3>多选框的不足之处</h3>
+
+<p>在电商平台上，很多情况下都存在一对多的关系。举几个熟悉的例子，像追加销售，交叉销售，相关产品这些情况。一个产品可能会对应不只一个促销。我们用追加销售来打比方，一个产品可以对应多个作为追加销售存在的产品。 通常情况下是在表单或是管理页面中使用多选框来管理此类数据或是关系，但是这样有几个不足：</p>
+
+<ol>
+<li>只能显示产品的一个属性。在这个例子中，我们只能显示产品名字在多选框里，但是要显示如SKU或是价格之类的属性的话，就不是那么容易就能办到的。</li>
+<li>用户只能选择多个产品，仅仅是选中，对额外数据无能为力。在这个例子中，表单只能提交选中的产品，但对各个选中产品的排列位置无能为力。</li>
+<li>数据量的增多会导制选项增多，多选框会变得庞大，难以管理。</li>
+<li>不能排序或是过滤，用户在找特定选项的时候会很困难。</li>
+</ol>
+
+
+<h3>作为表单元素的表格组件</h3>
+
+<p>为了克服多选框的局限性，我们需要有一个高级的表单元素，它应该包含如下功能：</p>
+
+<ol>
+<li>可以正选/反选多个实体。</li>
+<li>可以显示实体更多的信息。</li>
+<li>可以保存用户输入的额外数据。</li>
+<li>当数据量大的情况下，支持分页。</li>
+<li>支持复杂排序和过滤。</li>
+<li>格式应该统一，这样一来可以用在不同的实体或是不同的数据。</li>
+</ol>
+
+
+<p>幸运的是，Magento自带一些非常有意思的管理组件，特别是涉汲到后台插件的开发。这些组件太强大了，开发人员只需要写很少的代码或是'不'写模板便能创建出很直观的页面了。</p>
+
+<p>其中一个组件便是“表格”。 它内置了分页，排序和过滤。表格组件广泛用于后台管理界面，比如用来显示产品，订单，发票，注册用户等。但是我最中意的使 用便是作为表单元素。Magento提供了一个非常完美的解决方案用来克服之前说到的那些个不足，什么一对多啊之类的。</p>
+
+<p>```
+$this->addColumn('in_products', array(</p>
+
+<pre><code>'header_css_class' =&gt; 'a-center',
+'type'            =&gt; 'checkbox',
+'name'            =&gt; 'in_products',
+'values'          =&gt; $this-&gt;_getSelectedProducts(),
+'align'           =&gt; 'center',
+'index'           =&gt; 'entity_id'
+</code></pre>
+
+<p> ));</p>
+
+<p>```</p>
+
+<p>当用表格作为表单元素来替代多选框时，正常情况下，第一列的类型应该设为'checkbox'。这样一来，表格的每一行的第一列都会显示为checkbox。用户也就可以更好的选中他们想选择的数据。用此种方法进行多选比使用老式的多选框有效率多了。</p>
+
+<h3>AJAX之间数据的可持久性</h3>
+
+<p>第一眼看，此种机制堪称完美。但，表格同样也有分页，排序和过滤。每次执行其中的操作时，表格就通过AJAX调用进行重新加载，每次表格重新加载，之前选中的实体便会丢失。打个比方，我们正在选择追加销售商品，我们通过表格第一列的checkbo选中三个产品。现在，我们点击'下一页'链接来加载下一页的产品，或者同时在这个页面也选3个产品。然后，我们点击'上一页'链接回到之前的页。我们会发现之前选中的3个产品没有被选中，执行排序或是过滤也会导制同样的问题。所以讲，当表格组件搞定了老式多选框的不足后，诸如分页，过滤或是排序这类的操作会导制数据持久性的新问题。</p>
+
+<h3>序列化Block是如何处理数据的可持久性问题</h3>
+
+<p>Magento提供了另外一种Block叫作'Serializer Block'(序列化Block)，用它来处理选中数据的持久性问题。这种Block通常情况下会添加在表格Block的后面。该Block包含一个隐藏域和一个序列化过的JS对象。经过序列化的JS对象使用表格JS对象来得到选中的行。然后再序列化，像这样: key1=value1&amp;key2=value2&amp;…，再把经过序列化后的值赋给隐藏域。因为这个Block并没有嵌套在表格Block里面，所以即使是通过AJAX方式重新加载了表格Block，但是值被保存了下来。这个经过序列化过后的值，作为表单的一部分提交，在PHP端则通过 <code>parse_str()</code>函数来反序列化。</p>
+
+<p>不管怎么说，表单元素不光是用来存储用户输入的数据，同时也要显示之前已经保存过的数据。打个比方，当我们在文本框里填写了一些文本，那么我们填写的内容就会显示在里面。当我们从下拉框里面选中了任何一项，那么它就会默认显示我们选中的选项。同理，在此表格组件中也应该能显示选中的行。换句话讲，选中的行应该在第一列的checkbox里标记为checked。</p>
+
+<p>因此，序列化的JS对象在观察者事件观察表格的JS对象行为。所以当一个表格Block重载的时候，序列化的JS对象自动选中我们之前已经选中的行。</p>
+
+<p>那么，基于以上这些理论，我们可以把注意力放在怎么用这些知识去打造一个自定义的后台表格系统。</p>
+
+<h3>使用序列化表格Block</h3>
+
+<p>Magento提供了一个内置的库用来创建自定义表格和序列化Block。我们用追加销售表格来分析理解一下它是怎么工作的。</p>
+
+<p>在产品的编辑页面，左侧有一标签-追加销售。标签内容是通过AJAX加载。点击标签访问这个Action: Mage_Adminhtml_Catalog_ProductController::upsellAction()。</p>
+
+<p>那么该行为的布局就定义在下面的布局文件里 <code>app/design/adminhtml/default/default/catalog.xml</code></p>
+
+<p>```
+<adminhtml_catalog_product_upsell></p>
+
+<pre><code>&lt;block type="core/text_list" name="root"&gt;
+    &lt;block type="adminhtml/catalog_product_edit_tab_upsell" name="catalog.product.edit.tab.upsell"/&gt;
+    &lt;block type="adminhtml/widget_grid_serializer" name="upsell_grid_serializer"&gt;
+        &lt;reference name="upsell_grid_serializer"&gt;
+            &lt;action method="initSerializerBlock"&gt;
+                &lt;grid_block_name&gt;catalog.product.edit.tab.upsell&lt;/grid_block_name&gt;
+                &lt;data_callback&gt;getSelectedUpsellProducts&lt;/data_callback&gt;
+                &lt;hidden_input_name&gt;links[upsell]&lt;/hidden_input_name&gt;
+                &lt;reload_param_name&gt;products_upsell&lt;/reload_param_name&gt;
+            &lt;/action&gt;
+            &lt;action method="addColumnInputName"&gt;
+                &lt;input_name&gt;position&lt;/input_name&gt;
+            &lt;/action&gt;
+        &lt;/reference&gt;
+    &lt;/block&gt;
+&lt;/block&gt;
+</code></pre>
+
+<p></adminhtml_catalog_product_upsell>
+```
+这里，Block根节点是 core/text_list 类型。所以所有的子节点全都都按照顺序渲染。请看<a href="http://magebase.com/magento-tutorials/demystifying-magentos-layout-xml-part-1/">Demystifying Magento’s Layout XML Part 1</a>。</p>
+
+<p>第一个子Block <code>catalog.product.edit.tab.upsell</code> 是 <code>adminhtml/catalog_product_edit_tab_upsell</code>类型，继承自 <code>Mage_Adminhtml_Block_Widget_Grid</code>。所以它创建了一个表格。第二个子Block <code>adminhtml/widget_grid_serializer</code> 是 <code>adminhtml/widget_grid_serializer</code> 类型，此类型是序列化Block。就像我们之前提到的，序列化Block是会添加到表格Block后面。</p>
+
+<p>在XML布局文件中，拿序列化Block打比方，<code>方法 initSerializerBlock有如下几个参数:</code></p>
+
+<ol>
+<li>grid_block_name: 在布局文件中定义表格Block的名字，在我们的例子中叫作 <code>catalog.product.edit.tab.upsell</code>.</li>
+<li>dta_callback: 该参数定义了一个方法，用来取到已选中的数据，并填写在表格Block里。</li>
+<li>hidden_input_name: 隐藏域，从POST表单中取得提交的值。在我们的例子里是 links[upsell]。</li>
+<li>reload_param_name: 该参数定义了当表格Block通过AJAX分页/过滤/排序等操作时，checkbox的表单名，在我们的例子里是 <code>products_upsell</code>。</li>
+</ol>
+
+
+<p>当序列化Block初始化的时候，它会调用在 data_callback 里定义的方法用来得到初始数据，填入表格Block。在我们的例子中，这个方法为 <code>getSelectedUpsellProducts()</code>。下面便是追加销售表格Block里的相关代码:</p>
+
+<p>```
+public function getSelectedUpsellProducts()
+{</p>
+
+<pre><code>$products = array();
+foreach (Mage::registry('current_product')-&gt;getUpSellProducts() as $product) {
+    $products[$product-&gt;getId()] = array('position' =&gt; $product-&gt;getPosition());
+}
+return $products;
+</code></pre>
+
+<p>}
+```
+这里，该方法返回所有已经存储了的追加销售产品。序列化JS对象把这个返回值存到序列化元素里。基本上，当我们的表格第一次加载的时候，序列化把所有存储在数据库里的数据标记为选中。</p>
+
+<p>在表格Block中，受保护方法(protected)_prepareCoumns()用来定义列。那么追加销售表格Block的第一列就标记为checkbox:</p>
+
+<p>```
+$this->addColumn('in_products', array(</p>
+
+<pre><code>'header_css_class' =&gt; 'a-center',
+'type' =&gt; 'checkbox',
+'name' =&gt; 'in_products',
+'values' =&gt; $this-&gt;_getSelectedProducts(),
+'align' =&gt; 'center',
+'index' =&gt; 'entity_id'
+</code></pre>
+
+<p>));
+<code>``
+这里，类型(type)被定义为</code>checkbox<code>，所以说每一行的这一列将会被显示checkbox。values定义了checkbox的值，以此类推。产品ID对应的checkboxs应该被选中。这里</code>$this->_getSelectedProducts()`方法用来取得选中的数据。</p>
+
+<p>在追加销售产品Block里面还有一个方法 <code>getGridUrl()</code>:</p>
+
+<p>```
+public function getGridUrl() {</p>
+
+<pre><code>return $this-&gt;_getData('grid_url') ? $this-&gt;_getData('grid_url') : $this-&gt;getUrl('*/*/upsellGrid', array('_current'=&gt;true));
+</code></pre>
+
+<p>}
+```
+该方法定义了通过AJAX进行诸如分页，排序，过滤的操作时调用的URL。这个URL应该仅仅只是返回表格Block，而不会包含另外其它的Block，比如说是序列化Block。</p>
+
+<p>该URL里面方法的实体如下所示:</p>
+
+<p>```
+public function upsellGridAction() {</p>
+
+<pre><code>$this-&gt;_initProduct();
+$this-&gt;loadLayout();
+$this-&gt;getLayout()-&gt;getBlock('catalog.product.edit.tab.upsell')
+-&gt;setProductsUpsell($this-&gt;getRequest()-&gt;getPost('products_upsell', null));
+$this-&gt;renderLayout();
+</code></pre>
+
+<p>}
+```
+该方法对应的布局XML如下:</p>
+
+<p>```
+<adminhtml_catalog_product_upsellgrid></p>
+
+<pre><code>&lt;block type="core/text_list" name="root"&gt;
+    &lt;block type="adminhtml/catalog_product_edit_tab_upsell" name="catalog.product.edit.tab.upsell"/&gt;
+&lt;/block&gt;
+</code></pre>
+
+<p></adminhtml_catalog_product_upsellgrid>
+```</p>
+
+<p>序列化Block添加了一个隐藏域名为<code>hidden_input_name</code>。当用户选择了任意一行，序列化数据将会被存储到该隐藏域。当用户浏览下/上一页，排序或是过滤数据时，表格通过AJAX加载，选中的数据作为名为<code>reload_param_name</code>的参数通过AJAX来传递。<code>reload_param_name</code>这里是设为<code>products_upsell</code>。在之前提到的方法<code>upsellGridAction()</code>里，POST提交过来的<code>products_upsell</code>是通过<code>setProductsUpsell()</code>方法传递和取得的，并显示在追加销售Blcok实例里。所以说，调用<code>getProductsUpsell()</code>方法将会返回之前选中的数据。</p>
+
+<p>我之前有提到过<code>$this-&gt;_getSelectedProducts()</code>是用来得到选中的数据。下面是该方法的内容:</p>
+
+<p>```
+protected function _getSelectedProducts() {</p>
+
+<pre><code>$products = $this-&gt;getProductsUpsell();
+if (!is_array($products)) {
+    $products = array_keys($this-&gt;getSelectedUpsellProducts());
+}
+return $products;
+</code></pre>
+
+<p>}
+<code>``
+之前有提到过，可以通过调用追加销售Block实例里的</code>getProductsUpsell()<code>方法来得到选中的数据。在这个方法里，首先试着通过调用这个方法取得数据。但是在我们的例子里，我们正在试图编辑一个产品，并且，在点击追加销售产品标签后，右侧内容加载以来，我们没有做任何改动，这个表格应该显示数据库里已经保存过的数据为选中。不管怎么说，如果没有选过任何产品，表格会通过调用</code>$this->getSelectedUpsellProducts()`来取得之前保存过的数据。</p>
+
+<p>最后，当产品表单提交后，可以通过POST对象的<code>hidden_input_name</code>来取得选中的数据，在我们的例子里是<code>links[upsell]</code>。这个数据仍然是序例化格式的，Magento提供了一个Helper方法来解码这个数据: <code>Mage::helper('adminhtml/js')-&gt;decodeGridSerializedInput()</code>。</p>
+
+<p>产品控制器在执行真正的保存操作之前会调用<code>_initSave()</code>方法。这个方法就是用来解码序例化数据:</p>
+
+<p>```
+$links = $this->getRequest()->getPost('links');
+…
+if ( isset($links['upsell']) &amp;&amp; !$product->getUpsellReadonly() ) {</p>
+
+<pre><code>$product-&gt;setUpsellLinkData(Mage::helper('adminhtml/js')-&gt;decodeGridSerializeInput($links['upsell']));`
+</code></pre>
+
+<p>```</p>
+
+<p>最后，总结一下，完整的表格序列化Block执行过程按顺序如下:
+1. 初始化，表格和序例华Block加载。
+2. 当序例化Block初始完成后，会加载已保存的数据，并将它以序例化格式存在一个隐藏域中，并以选中的形式显示在表格Block里。
+3. 用户执行的任何修改都将同时在隐藏域里反应出来。
+4. 分页/排序/过滤等操作只会加载表格，而不是整个序例华Block，这样我们的数据就不会丢失。
+5. 当重新载入的时候，选中的数据会通过AJAX以POST的方式传递。
+6. 表格Block会试着从POST里取得数据，如果没有，会取得数据库中已经保存过的数据。
+7. 当表单提交后，选中的数据以序例华的方式传递。
+8. 最后，解码选中的数据并 存储到数据里。</p>
+
+<h3>总结</h3>
+
+<p>在这篇文章里，我们拿追加销售产品作为例子来分析怎么组合使用表格和序例化Block来作为传统多选框的替代方案。在该系例的下一篇文章里，我将会描述更多关于表格序例化的高级功能，这些功能可以创建更大，用户界面更友好的自定义widgets。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Magento Widget Form Container 错误]]></title>
     <link href="http://billsion.github.io/blog/2013/06/02/magento-widget-form-container-problem/"/>
     <updated>2013-06-02T20:38:00+08:00</updated>
     <id>http://billsion.github.io/blog/2013/06/02/magento-widget-form-container-problem</id>
@@ -78,6 +312,61 @@ Fatal error: Call to a member function setData() on a non-object in app/code/cor
 
 
 <p>稍微修改下就成了，就这么简单。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[在Magento中合并JavaScript一定会提升访问速度吗]]></title>
+    <link href="http://billsion.github.io/blog/2013/04/14/zai-magentozhong-he-bing-javascript-ding-hui-ti-sheng-fang-wen-su-du-ma/"/>
+    <updated>2013-04-14T15:53:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/04/14/zai-magentozhong-he-bing-javascript-ding-hui-ti-sheng-fang-wen-su-du-ma</id>
+    <content type="html"><![CDATA[<p>本文译自<a href="http://fishpig.co.uk/blog/why-you-shouldnt-merge-javascript-in-magento.html">fishpig</a></p>
+
+<p>很多人 - 包括我自己 - 认为把所有的独立JS文件合并成一个文件是一个提升前端速度不错的的方法。道理很简单，合并文件，自然就减少了浏览器在加载页面时的请求数量，好处自然就是缩短完成请求的时间，让页面载入更快。让我们通过Magento中的一个例子来看看它是怎么处理的。</p>
+
+<p>设想一下你刚刚在后台开启了Javascript 合并功能，这时有人来浏览你的网站。Magento将整理所有的XML布局文件并且判断在首页应该包含哪些Javascript。所有的这些被请求的JS文件都会被合并成一个单一文件并且以MD5加密的文件名来存储，此新文件，比如说是 f0eb853c09ba3e46ad21fb89b8d57626.js，只为那些浏览过该网页并保存在浏览器缓存中的用户服务。</p>
+
+<p>接下来，用户点击一个链接进入到目录页面。这时，Magento会再一次整理所有的XML布局文件并且判断目录页面会用到哪些JS文件。此时，Magento 会发现在首页用到的JS文件同样也会在目前的页面中用到，这一次不同，浏览器知道自己已经下载了这个文件，便不会再次下载。相反，文件会从用户的缓存中加载以节省时间，带宽和CPU资源！</p>
+
+<p>目前为止，一切都运行的好好的，我们通过减少对服务器的请求让页面变快了，但是……</p>
+
+<p>接下来，用户被一个产品吸引，于是点击进去到详细页面浏览。再一次，Magento判定哪些在布局文件(XML)里的JS文件需要被加载。此时，Magento发现会用到首页已经加载的JS文件，当然还有两个新文件需要加载。但是已有的合并文件中不存在这样的内容，于是Magento会新建一个名为139f9771ba2ba0cae754978fab4a3c35.js的文件。粗略估计该文件的80％和首页的脚本文件一样，已经被用户下载并缓存了。但还是会迫使用户下载该文件全部内容！虽然此文件的80％已经缓存了，但用户的浏览器完全不知情，还是会下载该文件并缓存！</p>
+
+<p>合并JS文件的初衷是为了减少页面的加载时间，但是在上述场景里，用户被迫再次下载一大块代码！这样做毫无疑问增加了页面载入时间（下载并不需要下载的JS文件，差不多有～40kb），这样做的结果反而和合并文件的初衷相违被。</p>
+
+<p>让我们来看看如果不开启合并JS会怎样。</p>
+
+<p>当用户第一次访问首页时，之前合并过的JS文件在这次请求中会被单独下载。虽然这些文件整个大小和之前合并文件的大小一致，但是请求时间会比较长，因为文件都是被单独请求/下载/缓存的。</p>
+
+<p>接下来，用户访问分类页面，这个页面用到了和之前在浏览首页时下载/缓存过的文件。结果就是此页面加载的时间和之前合并JS后加载页面用的时间一样。在这两种情况下，所有需要用到的JS文件都已经下载下来并且已经缓存了，总而言之，浏览器可以不管这些文件了。</p>
+
+<p>最后，用户访问了产品页面，此页面把之前在首页和分类页面加载过的文件，除此之外加载两个新文件。这些文件已经在首页或是分类页面缓存过了，所以浏览器直接跳过下载，并且缓存两个之前并没有访问过的文件！同时，Magento首页用到的文件占到了产品页面里JS文件数量的80%。当关闭合并选项后，我们就直接的下载了剩下的20%。在之前的合并例子里，等于说是整个重新下载了一遍！</p>
+
+<p>问题就是用户在访问不同页面时，JS文件也会有不同的组合，这样难免在一个页面中漏掉某一个JS，每当这种情况发生时，用户就会被强迫下载之前已经下载过的文件，并以另一个文件名保存。</p>
+
+<h3>怎么办?</h3>
+
+<p>当Magento的合并功能有问题时，就只能动手作些小修改了。</p>
+
+<p>在Magento里面，Javascript是通过XML文件里的Head block或是数组来循环添加到HTML里。我们建议加一个额外的参数在你的Javascript包含代码里，看下面的代码：</p>
+
+<pre><code>&lt;default&gt;
+    &lt;reference name="head"&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;prototype/prototype.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/builder.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/effects.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;varien/form.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
+    &lt;/reference&gt;
+&lt;/default&gt;
+&lt;catalog_product_view&gt;
+    &lt;reference name="head"&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;varien/product.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
+        &lt;action method="addJs"&gt;&lt;script&gt;varien/configurable.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
+    &lt;/reference&gt;
+&lt;/catalog_product_view&gt;
+</code></pre>
+
+<p>注意到了新参数 group 吗？和合并所有的Javascript到一个文件不一样，group参数将会判断哪些Javascript文件需要合并。上面的代码将会为产品页面生成两个分开的合并文件: 一个是包含在首页里用到的全局Javascript，一个是包含只会在产品页面里用到的文件。虽然这样做会导制额外的请求，但这样做还是会节省时间，因为不用再去下载已经在首页下载过的文件！如果在整站中用到这个小技巧，每一个Javascript将只会被下载一次。</p>
 ]]></content>
   </entry>
   

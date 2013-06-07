@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: PHP, | Bill]]></title>
+  <link href="http://billsion.github.io/blog/categories/php/atom.xml" rel="self"/>
+  <link href="http://billsion.github.io/"/>
+  <updated>2013-06-07T10:28:53+08:00</updated>
+  <id>http://billsion.github.io/</id>
+  <author>
+    <name><![CDATA[Bill Sion]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[在Mac OS X里面升级原生PHP]]></title>
+    <link href="http://billsion.github.io/blog/2013/06/07/upgrade-php-version-in-mac-os-x/"/>
+    <updated>2013-06-07T10:18:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/06/07/upgrade-php-version-in-mac-os-x</id>
+    <content type="html"><![CDATA[<p>目前机器上的PHP版本是5.3.15，低了，想升到5.4，于是百度搜了下，出来的都是三条语句升级:</p>
+
+<p><code>
+brew tap homebrew/dupes
+brew tap josegonzalez/homebrew-php
+brew install hp54
+</code></p>
+
+<p>实际上这样并不能安装成功，因为目标文件已经不存在了。于是求助Google，在StackOverflow上找到了答案。<a href="http://php-osx.liip.ch/">这里</a></p>
+
+<p>一句话就OK:</p>
+
+<p><code>
+curl -s http://php-osx.liip.ch/install.sh | bash -s 5.4
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

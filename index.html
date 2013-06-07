@@ -7,7 +7,12 @@
 	<meta name="author" content="Bill Sion">
 
 	
-	<meta name="description" content="本文译自Inchoo 当我们需要把业务逻辑从Magento默认的路由中区别开来，不受Magento默认路由的影响，创建一个自定义的路由功能就显得很方便了。 那为什么我们不能为不同的逻辑创建不同的路由呢？ 让我来简单解释一下：在我的一个客户的项目中，我整合过一个 OneStepCheckout &hellip;">
+	<meta name="description" content="目前机器上的PHP版本是5.3.15，低了，想升到5.4，于是百度搜了下，出来的都是三条语句升级: 1
+2
+3
+brew tap homebrew/dupes
+brew tap josegonzalez/homebrew-php
+brew install hp54 实际上这样并不能安装成功， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -73,6 +78,64 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/06/07/upgrade-php-version-in-mac-os-x/">
+		
+			在Mac OS X里面升级原生PHP</a>
+	</h2>
+	<div class="entry-content">
+		<p>目前机器上的PHP版本是5.3.15，低了，想升到5.4，于是百度搜了下，出来的都是三条语句升级:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>brew tap homebrew/dupes
+</span><span class='line'>brew tap josegonzalez/homebrew-php
+</span><span class='line'>brew install hp54</span></code></pre></td></tr></table></div></figure>
+
+
+<p>实际上这样并不能安装成功，因为目标文件已经不存在了。于是求助Google，在StackOverflow上找到了答案。<a href="http://php-osx.liip.ch/">这里</a></p>
+
+<p>一句话就OK:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>curl -s http://php-osx.liip.ch/install.sh | bash -s 5.4</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-07T10:18:00+08:00" pubdate data-updated="true">Jun 7<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/mac/'>Mac</a>, <a class='category' href='/blog/categories/php/'>PHP,</a>
+
+
+</div>
+	
+</div></article>
 
 
     <article class="post">

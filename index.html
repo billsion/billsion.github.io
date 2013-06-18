@@ -7,12 +7,7 @@
 	<meta name="author" content="Bill Sion">
 
 	
-	<meta name="description" content="目前机器上的PHP版本是5.3.15，低了，想升到5.4，于是百度搜了下，出来的都是三条语句升级: 1
-2
-3
-brew tap homebrew/dupes
-brew tap josegonzalez/homebrew-php
-brew install hp54 实际上这样并不能安装成功， &hellip;">
+	<meta name="description" content="昨天下午遇到了個頭疼的問題，客戶對產品評論的時間總是晚於客服回復的時間，這個根本說不通，按照常理來講，只能先評論，客服才能對評論進行回復。知道問題所在，於是開始DEBUG。 首先檢查對應的模塊有沒有被重寫，查看config.xml配置文件裏的&lt;rewrite&gt;項，沒有重寫， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -78,6 +73,62 @@ brew install hp54 实际上这样并不能安装成功， &hellip;">
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/06/18/magento-review-time-zone-configuration/">
+		
+			在Magento產品評論中出現的時區問題</a>
+	</h2>
+	<div class="entry-content">
+		<p>昨天下午遇到了個頭疼的問題，客戶對產品評論的時間總是晚於客服回復的時間，這個根本說不通，按照常理來講，只能先評論，客服才能對評論進行回復。知道問題所在，於是開始DEBUG。</p>
+
+<ul>
+<li><p>首先檢查對應的模塊有沒有被重寫，查看<code>config.xml</code>配置文件裏的<code>&lt;rewrite&gt;</code>項，沒有重寫，證明Model是幹凈的。同時再看Controller部分有沒有問題，也沒有，說明根本沒有重寫這個模塊。</p></li>
+<li><p>再檢查是否有顯示的設置了<code>created_at</code>或是<code>updated_at</code>時間，在代碼裏。結果也是沒有。</p></li>
+</ul>
+
+
+<p>這就奇怪了，於是接下來檢查PHP和MYSQL的時區設置。</p>
+
+<ul>
+<li><p>寫個腳本查看phpinfo()或是<code>php.ini</code>，時區是 <code>Asia/Shanghai</code>，沒問題，是對的。</p></li>
+<li><p>在MySQL裏運行 <code>show variables like '%time_zone%'</code>; 發現 <code>default_time_zone</code>是用的<code>SYSTEM</code>，於是在 <code>/etc/my.cnf</code> 裏加一句 <code>default_time_zone='+8:00'</code>，重啟MySQL。搞掟時區問題。</p></li>
+</ul>
+
+
+<p>現在時區顯示是對了，但是時間還是不對，於是查看對應表<code>review</code>的schema發現，<code>created_at</code>這裏填寫的是 <code>CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP</code>，這就是原因，這就是為什麼回復評論的時間在評論創建的時間之前。可以給Magento提交BUG了。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-18T11:15:00+08:00" pubdate data-updated="true">Jun 18<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/magento/'>Magento</a>
+
+
+</div>
+	
+</div></article>
 
 
     <article class="post">

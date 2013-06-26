@@ -4,7 +4,7 @@
   <title><![CDATA[Bill]]></title>
   <link href="http://billsion.github.io/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-06-18T11:48:08+08:00</updated>
+  <updated>2013-06-26T15:47:10+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -12,6 +12,512 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[PHP裏的Foreach到底是怎麼工作的]]></title>
+    <link href="http://billsion.github.io/blog/2013/06/26/how-foreach-actually-works/"/>
+    <updated>2013-06-26T15:31:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/06/26/how-foreach-actually-works</id>
+    <content type="html"><![CDATA[<p>本文譯自StackOverflow上的這篇<a href="http://stackoverflow.com/questions/10057671/how-foreach-actually-works," title="文章地址">文章</a></p>
+
+<p>讓我首先聲明一下，我知道什麼是<code>foreach()</code>，它是怎麼工作的，在什麼時候使用它。</p>
+
+<p>我的問題便是『它內部是怎麼工作的』，我不想看到諸如『是的，<code>foreach()</code>下的數組是這樣循環的』。</p>
+
+<hr />
+
+<p>有很長一段時間我都以為<code>foreach()</code>是對數組本身進行操作。之後，我查閱了許多資料才發現它實際上是對<em>拷貝</em>進行操作，然後我就以為事情就到此為止了。但最近我參與了一個對此事的討論，在經過一些小的實驗求證後，我發現事情並沒有我想的那麽簡單，事情並沒有結束。</p>
+
+<p>讓我來告訴你們這是怎麼一回事。對於下面將會出現的例子，我們將用這個數組作為操作對象：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$array = array(1, 2, 3, 4, 5);</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://codepad.org/7DIeObk9," title="測試案例1">測試案例1</a>：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>foreach ($array as $item) {
+</span><span class='line'>  echo "$item\n";
+</span><span class='line'>  $array[] = $item;
+</span><span class='line'>}
+</span><span class='line'>print_r($array);
+</span><span class='line'>
+</span><span class='line'>/* Output in loop:    1 2 3 4 5
+</span><span class='line'>   $array after loop: 1 2 3 4 5 1 2 3 4 5 */</span></code></pre></td></tr></table></div></figure>
+
+
+<p>很明顯這段代碼告訴我們，<code>foreach()</code> 並沒有操作源數組 - 否則循環將永遠執行下去，因此我們在循環的過程中不斷的往數組中添加元素。但只能肯定這一點 - 我們並沒有操作源數組:</p>
+
+<p><a href="http://codepad.org/nirz6Ufh," title="測試案例2">測試案例2</a>：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>foreach ($array as $key =&gt; $item) {
+</span><span class='line'>  $array[$key + 1] = $item + 2;
+</span><span class='line'>  echo "$item\n";
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>print_r($array);
+</span><span class='line'>
+</span><span class='line'>/* Output in loop:    1 2 3 4 5
+</span><span class='line'>   $array after loop: 1 3 4 5 6 7 */</span></code></pre></td></tr></table></div></figure>
+
+
+<p>該例子證明了我們最初的結論，在循環期間我們是操作的源數組拷貝，否則我們會在循環期間看到修改過後的值。<em>但是&#8230;</em></p>
+
+<p>如果我們查看<a href="http://php.net/manual/en/control-structures.foreach.php," title="手冊">手冊</a>，我們會發現這樣的說法：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>當 foreach 第一次執行的時候，內部指針會自動重置並指向到數組的第一個元素。</span></code></pre></td></tr></table></div></figure>
+
+
+<p>好吧… 這樣看起來像是在說<code>foreach()</code>依賴於源數組的數組指針。但是我們不是剛剛證明我們並沒有操作源數組，不是嗎？好吧，可能不完全是。</p>
+
+<p><a href="http://codepad.org/6n20ooMy," title="測試案例3">測試案例3</a>：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// Move the array pointer on one to make sure it doesn't affect the loop
+</span><span class='line'>var_dump(each($array));
+</span><span class='line'>
+</span><span class='line'>foreach ($array as $item) {
+</span><span class='line'>  echo "$item\n";
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>var_dump(each($array));
+</span><span class='line'>
+</span><span class='line'>/* Output
+</span><span class='line'>  array(4) {
+</span><span class='line'>    [1]=&gt;
+</span><span class='line'>    int(1)
+</span><span class='line'>    ["value"]=&gt;
+</span><span class='line'>    int(1)
+</span><span class='line'>    [0]=&gt;
+</span><span class='line'>    int(0)
+</span><span class='line'>    ["key"]=&gt;
+</span><span class='line'>    int(0)
+</span><span class='line'>  }
+</span><span class='line'>  1
+</span><span class='line'>  2
+</span><span class='line'>  3
+</span><span class='line'>  4
+</span><span class='line'>  5
+</span><span class='line'>  bool(false)
+</span><span class='line'>*/</span></code></pre></td></tr></table></div></figure>
+
+
+<p>好吧，拋開我們並沒有操作源數組，但是動了源數組的指針這個事實不談 - 實際上在循環結束時，指針指向數組的末端說明了這一情況。除非這不可能是真的 - 如果是真的，<a href="http://codepad.org/7DIeObk9," title="測試案例1">測試案例1</a>將會進入死循環。</p>
+
+<p>PHP文檔同樣也說：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>鑑於foreach依賴於內置數組指針，在循環期間修改它會導制不可預料的行為。</span></code></pre></td></tr></table></div></figure>
+
+
+<p>好吧，讓我們來看看『不可預料的行為』是個什麼情況(文藝點的說法，任何我沒預料到的情況都是不可預料的行為)。</p>
+
+<p><a href="http://codepad.org/JJp79xSd," title="測試案例4">測試案例4</a>：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>foreach ($array as $key =&gt; $item) {
+</span><span class='line'>  echo "$item\n";
+</span><span class='line'>  each($array);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>/* Output: 1 2 3 4 5 */</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="http://codepad.org/IfwJyTCL," title="測試案例5">測試案例5</a>：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>foreach ($array as $key =&gt; $item) {
+</span><span class='line'>  echo "$item\n";
+</span><span class='line'>  reset($array);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>/* Output: 1 2 3 4 5 */</span></code></pre></td></tr></table></div></figure>
+
+
+<p>&#8230;瞧吧，沒有不可預料的行為，事實上和『源數組拷貝』理論更搭。</p>
+
+<hr />
+
+<p>請來個人幫我解釋一下這裏到底發生了什麼事情好嗎？我的C語言功底不怎麼好，所以不能通過看PHP源代碼來總結出一個合適的結論，如果有人能用英文給我解釋一下，我會非常感激的。</p>
+
+<p>在我看來<code>foreach()</code>是對數組拷貝的操作，在對數組循環完成後，將源數組的數組指針指向末尾。</p>
+
+<p>我的理解是對的嗎？就是這樣？
+如果不是，那是怎麼回事？
+有沒有情況是用函數( <code>each()</code>, <code>reset()</code> 這樣的函數？ )在循環裏來修正/調整數組指針的從而影響循環外的結果？</p>
+
+<hr />
+
+<p>注意：接下來的回答假設你對zvals在PHP裏怎麼工作已經有了一些基本的知識儲備，特別是你應該知道什麼是<code>refcount</code>，什麼是<code>is_ref</code>。</p>
+
+<p><code>foreach()</code>適用於所有的可遍歷類型。比如說，數組，『純』對象( 可遍歷訪問的屬性 )和<code>可遍歷</code>對象( 或者是定義了<code>get_iterator</code>的對象 )。此回答將主要關注於數組，我會在文章末尾提到其它數據類型。</p>
+
+<p>但是在進入正題前前，數組的一些背景知識和它們的循環在接下來的內容裏也同樣重要：</p>
+
+<h1>數組循環的背景</h1>
+
+<p>PHP裏的數組是有序的哈希表( 比如說，哈希桶是雙表連接<del>doubly linked list</del>的一部分 )，<code>foreach()</code>會按照這個順序遍歷數組。</p>
+
+<p>PHP內置有兩套機制來遍歷數組：第一個便是內置數組指針。此指針是<code>哈希表</code>結構的一部分，並且只指向當前<code>哈希桶</code><del>HashTable Bucket</del>。修改操作是對內置數組指針無效的，比如，如果當前<code>哈希桶</code>被刪除，那麽內置數組指針將會更新，並指向下一個桶。</p>
+
+<p>第二個機制便是<code>外置數組指針</code>，叫作<code>哈希位</code><del>HashPosition</del>。基本上此指針和內置數組指針一樣，不同的是它並不保存在<code>哈希表</code>裏。修改操作對外置循環機制是<strong>起作用</strong>的。如果你刪除了<code>哈希位</code>當前指向的<code>哈希桶</code>，那麽你就遺留了一個懸掛指針，導制分段錯誤。</p>
+
+<p>此類外置數組指針只有在你十分確定以及肯定在循環期間沒有用戶代碼執行的情況下才能使用。用戶編寫的代碼可以通過多種渠道運行，比如錯誤處理，強制轉換或者zval銷燬。這就是為什麼在多數情況下，PHP使用內置數組指針而不用外置數組指針。如果不是PHP，那麽當用戶做些奇怪事情的時候會導制段錯誤<del>If it would not PHP could segfault when the user started doing weird things.</del>。</p>
+
+<p>內置數組指針的問題便是它是<code>哈希表</code>的一部分。所以當你修改它時，你實際上是修改的<code>哈希表</code>和數組。同時，在PHP的語義中，數組是基於傳值的( 另一個是引用 )這就意味著在循環數組時，是對原數組的拷貝進行操作。</p>
+
+<p>一個簡單嵌套循環的例子便說明拷貝是多麽的必要( 不是為了代碼簡潔考慮 ):</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>foreach ($array as $a) {
+</span><span class='line'>    foreach ($array as $b) {
+</span><span class='line'>        // ...
+</span><span class='line'>    }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>這裏兩個循環是以一種奇怪的方式相互獨立的並且沒有共享它們的指針。</p>
+
+<p>然後我們就可以開始<code>foreach()</code>了：</p>
+
+<h1>用Foreach進行數組叠代</h1>
+
+<p>現在你知道為什麼<code>foreach()</code>遍歷數組前拷貝了吧。但是這不僅僅是如此。PHP是否會進行拷貝操作基於以下幾個因素：</p>
+
+<ul>
+<li>如果叠代的數組是引用類型，拷貝就不起作用，取而代之的是執行<code>addref</code>：</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ref =& $array; // $array has is_ref=1 now
+</span><span class='line'>foreach ($array as $val) {
+</span><span class='line'>    // ...
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>為什麼？因為數組的任何修改都應該通過引用影響到數組，包括內置數組指針。如果<code>foreach()</code>在這種情況下是對拷貝進行操作，那麽就違背了基本語義。</p>
+
+<ul>
+<li>如果數組的<code>refcount</code>為1，拷貝操作同樣不會執行。<code>refcount=1</code>的意思是指數組沒有在其它地方使用到，所以<code>foreach()</code>可以直接對其操作。如果<code>refcount</code>的值大於1，意思就是說，該數組和其它變量共享，並且為了避免修改，<code>foreach()</code>必須對其進行拷貝操作( 和之前的例子相反 )。</li>
+<li>如果數組是以引用的方式被循環操作( <code>foreach( $array as &amp;$ref )</code> )，除了之前的拷貝/非拷貝操作行為之外 - 隨後將會創建一個指向數組的引用。</li>
+</ul>
+
+
+<p>這就是拷貝秘密的冰山一角。接下來便是循環到底是怎麼完成的，這有點奇怪。你所理解的『通常意義上的』循環( 同樣也適用於PHP中除了<code>foreach()</code>之外的所有情況 )基本上是這個樣子( 偽代碼 )：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>reset();
+</span><span class='line'>while (get_current_data(&data) == SUCCESS) {
+</span><span class='line'>    code();
+</span><span class='line'>    move_forward();
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>foreach()</code>循環和其相比較起來，就有點小區別：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>reset();
+</span><span class='line'>while (get_current_data(&data) == SUCCESS) {
+</span><span class='line'>    move_forward();
+</span><span class='line'>    code();
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>區別就是<code>move_foreard()</code>在第一次循環開始的時候就執行了，而不是在循環的末尾。所以假如當你的代碼在操作變量<code>$i</code>時，內置數組指針就已經指向<code>$i+1</code>了。</p>
+
+<p><code>foreach()</code>的這種行為同樣也解釋了為什麼當當前數組元素被刪除時，內置數組指針總是指向<em>下一個</em>哈希桶，而不是上一個( 就像你期待的那樣 )。它就是這樣工作的，並且在<code>foreach()</code>裏表現的還不錯( 但是這種行為並不是在所有的情形下都表現上佳，在這個例子裏就會跳過某些數組元素 )。</p>
+
+<h1>代碼的啟示</h1>
+
+<p>第一條啟示便是我之前剛剛講到的行為 - <code>feach()</code>在很多情況下都是對數組拷貝進行循環操作的( 慢 )。但是別怕：實際上，我嘗試過拋開需求來進行循環操作，沒看到任何性能上的不同，我只能講這是心理因素在作怪( 這些循環顯示快了兩倍 )。看來人們並不是十分了解循環啊。:P</p>
+
+<p>第二條啟示便是<em>通常</em>來說不應該有任何啟示。<code>foreach()</code>的行為對用戶來說是相當淺顯易懂的，就像它自己描述的那樣工作。你不用擔心它是怎麼拷貝數組啊，它的指針是怎麼指啊什麼的。</p>
+
+<p>第三條啟示是 - 現在我們談到你遇到的問題了 - 有時你會<em>遇到</em>想破腦袋也搞不清楚的問題。特別是你在用<code>foreach()</code>修改數組時。</p>
+
+<p>你可以在PHP的測試套件裏找到一大堆修改數組時遇到的極端情況。試試這個<a href="https://raw.github.com/php/php-src/master/tests/lang/foreachLoop.012.phpt," title="例子">例子</a>，比方講把數字從<code>012</code>改為<code>013</code>，你會看到<code>forach()</code>函數運行的各種情況( 不同的引用組合 )。</p>
+
+<p>好吧，回到你的問題裏：</p>
+
+<ul>
+<li><p>測試案例1: 這裏 <code>$array()</code>的<code>refcount</code>在循環之前為1，所以它不會被拷貝，但是會有一個<code>addref</code>。當你在循環內部對<code>$array[]</code>操作時，zval將會被分離，所以說，你在循環裏往裏添加元素的那個數組和在循環過程中的數組是不相關的。</p></li>
+<li><p>測試案例2：和1同理。</p></li>
+<li><p>測試案例3：是的，還是一個道理。在<code>foreach()</code>循環裏，<code>refcount</code>為1，你僅能得到一個<code>addref</code>和修改<code>$array()</code>內置指針的能力。所以說在循環結束後，指針是NULL( 意思是說循環結束 )。<code>each()</code>返回當前指針，就是<code>false</code>。</p></li>
+<li><p>測試案例4和5：<code>each()</code>和<code>reset()</code>都是引用類型函數。當將<code>array()</code>作為參數傳遞給這兩個函數時，它的<code>refcount</code>為2，所以說它被分離了。再一次，<code>foreach()</code>是操作分離出來的數組。</p></li>
+</ul>
+
+
+<p>但是你舉的例子很爛。只有當你在循環裏用到<code>current()</code>函數你才能直觀的看到指針行為。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>foreach ($array as $val) {
+</span><span class='line'>    var_dump(current($array));
+</span><span class='line'>}
+</span><span class='line'>/* Output: 2 2 2 2 2 */</span></code></pre></td></tr></table></div></figure>
+
+
+<p>這裏你應該知道<code>current()</code>是一個引用類型函數，即使它並沒有修改數組。它和諸如<code>next()</code>之類的引用類型函數一起使用才有效果。( <code>current</code>實際上是一個<code>prefer-ref</code>函數，傳值或是引用都可以。 )『引用』意思是指數組被分離，<code>$array</code>和<code>foreach()</code>裏的<code>$array</code>是兩碼事。上面例子裏結果是<code>2</code>而不是<code>1</code>和之前講的是一個道理：<code>foreach()</code>在用戶代碼執行<em>之前</em>就已經移動了數組指針，而不是之後。所以即使是代碼在第一個元素，<code>foreach()</code>已經移動指針到下一個元素了。</p>
+
+<p>現在讓我們來小改一下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ref = &$array;
+</span><span class='line'>foreach ($array as $val) {
+</span><span class='line'>    var_dump(current($array));
+</span><span class='line'>}
+</span><span class='line'>/* Output: 2 3 4 5 false */</span></code></pre></td></tr></table></div></figure>
+
+
+<p>這個例子是<code>is_ref</code>為1的情況，所以數組沒有被拷貝( 和之前一樣 )。但現在的情況就是數組被傳遞給引用類型的函數<code>current()</code>時，它不再分離了。所以目前 <code>current()</code>和<code>foreach()</code>都是操作的同一個數組。在<code>foreach()</code>操作數組的過程中，你仍然會看到大小差一<del>off-by-one</del>的情況。</p>
+
+<p>當以引用的方式來循環時，也會得到同樣的結果：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>foreach ($array as &$val) {
+</span><span class='line'>    var_dump(current($array));
+</span><span class='line'>}
+</span><span class='line'>/* Output: 2 3 4 5 false */</span></code></pre></td></tr></table></div></figure>
+
+
+<p>這裏要提一下的是當以引用的方法循環時，<code>foreach()</code>將會設<code>$array</code>的<code>is_ref</code>為1，基本上你會得到和之前同樣的結果。</p>
+
+<p>另外一個小改動：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$foo = $array;
+</span><span class='line'>foreach ($array as $val) {
+</span><span class='line'>    var_dump(current($array));
+</span><span class='line'>}
+</span><span class='line'>/* Output: 1 1 1 1 1 */</span></code></pre></td></tr></table></div></figure>
+
+
+<p>這裏在循環開始時，<code>$array</code>的<code>refcount</code>是2，這一次我們實際上執行了拷貝操作。因此<code>$array</code>和<code>foreach()</code>裏的<code>$array()</code>是完全不同的。這就是為什麼在循環開始前你會得到內置指針指向的位置( 在這個例子裏，它是指向在第一個元素 )。</p>
+
+<h1>對象的循環</h1>
+
+<p>當一個對象循環時，要滿足兩種情況：</p>
+
+<ul>
+<li>對象不是<code>可遍歷的</code>( 或者這樣講：沒有定義內置的<code>get_iterator</code>句柄 )。在這種情況下的循環和數組非常相似。適用於同樣的拷貝語義。唯一不同的情況便是<code>foreach()</code>將會運行一些額外的代碼用來跳過不在當前範圍內的屬性。隨便列幾個真實的情況：
+
+<ul>
+<li><p>對於聲明的屬性，PHP會優化屬性哈希表。如果你循環完整個對象，那麽它會自動重新構建哈希表( 增加內存使用 )。[ 你不應被這麻煩到，小事而已 ]</p></li>
+<li><p>每次叠代都會取屬性的哈希表。比如PHP將會重復重復再重復的調用<code>get_properties</code>句柄。對『正常』屬性來講，這會造成些細小差別，但是如果這些屬性是在句柄裏動態生成的( 這就是類內部經常幹的事 )，那就意味著屬性哈希表每次都會重建。</p></li>
+</ul>
+</li>
+<li>對象是<code>可遍歷的</code>。在這種情況下，千言萬語匯成一句話 - 那就是之前我們已經說了的 - <strong>不可能</strong>。這裏PHP不會做任何拷貝操作並且也不會『在循環開始之前就移動指針』。我認為<code>可遍歷</code>的循環操作是更容易預測並且無需多說。:)</li>
+</ul>
+
+
+<h1>在循環過程中替代叠代元素</h1>
+
+<p>另一個奇怪的地方我之前沒有提到的便是PHP允許你在叠代的過程中替換叠代元素。所以講，你可以在循環一個數組時，在叠代期間用另一個數組替換掉它。或者是用對象替換。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$arr = [1, 2, 3, 4, 5];
+</span><span class='line'>$obj = (object) [6, 7, 8, 9, 10];
+</span><span class='line'>
+</span><span class='line'>$ref =& $arr;
+</span><span class='line'>foreach ($ref as $val) {
+</span><span class='line'>    echo "$val\n";
+</span><span class='line'>    if ($val == 3) {
+</span><span class='line'>        $ref = $obj;
+</span><span class='line'>    }
+</span><span class='line'>}
+</span><span class='line'>/* Output: 1 2 3 6 7 8 9 10 */</span></code></pre></td></tr></table></div></figure>
+
+
+<p>就像你從這個例子中理解的一樣，在代碼開頭聲明的對象替換完成後循環才能繼續直到叠代完成。</p>
+
+<h1>在循環期間改變內置數組指針</h1>
+
+<p>另一個之前我沒有說到的<code>foreach()</code>行為細節( 它真的會產生一些莫名奇妙的行為 )便是在循環期間改變內置數組指針發生的奇怪的事情。</p>
+
+<p>它或許不像你期待的那樣工作：當在循環體( 引用情形 )裏調用<code>next()</code>或是<code>prev()</code>時，你會發現內置數組指針移動了，但是對循環的行為沒有起到作用。究其原因就是<code>foreach()</code>會在每次叠代後都備份當前地址和hash當前元素到<code>哈希指針</code>。在進行下一個叠代時，<code>foreach()</code>便會檢查內置指針指向的地址是否被修改並嘗試回復到之前元素的狀態( 基於哈希表 )。</p>
+
+<p>讓我們瞧瞧『嘗試』是怎麼『嘗』的。首先，這裏有一個例子，展示了內置指針<em>沒有</em>改變<code>foreach()</code>行為時的變化：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$array = [1, 2, 3, 4, 5];
+</span><span class='line'>$ref =& $array;
+</span><span class='line'>foreach ($array as $value) {
+</span><span class='line'>    var_dump($value);
+</span><span class='line'>    reset($array);
+</span><span class='line'>}
+</span><span class='line'>// output: 1, 2, 3, 4, 5</span></code></pre></td></tr></table></div></figure>
+
+
+<p>接下來讓我們移去<code>foreach()</code>在第一次叠代時指針所指的元素( 鍵1 )：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$array = [1, 2, 3, 4, 5];
+</span><span class='line'>$ref =& $array;
+</span><span class='line'>foreach ($array as $value) {
+</span><span class='line'>    var_dump($value);
+</span><span class='line'>    unset($array[1]);
+</span><span class='line'>    reset($array);
+</span><span class='line'>}
+</span><span class='line'>// output: 1, 1, 3, 4, 5</span></code></pre></td></tr></table></div></figure>
+
+
+<p>你看到之後發生了什麼事了( 兩個1 )，因為備份了散列碼的元素已經被刪除了。</p>
+
+<p>記住哈希就是把東西弄亂<del>Hash的中文意思裏有弄亂的意思</del>，比如說衝突。所以吧，讓我們看看下面這個代碼片段：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$array = ['EzEz' =&gt; 1, 'EzFY' =&gt; 2, 'FYEz' =&gt; 3];
+</span><span class='line'>$ref =& $array;
+</span><span class='line'>foreach ($array as $value) {
+</span><span class='line'>    unset($array['EzFY']);
+</span><span class='line'>    $array['FYFZ'] = 4;
+</span><span class='line'>    reset($array);
+</span><span class='line'>    var_dump($value);
+</span><span class='line'>}
+</span><span class='line'>// output: 1 1 3 4</span></code></pre></td></tr></table></div></figure>
+
+
+<p>結果可以預計。我們移去了鍵<code>EzFY</code>( 當前<code>foreach()</code>所在的位置 )，然後調用<code>reset()</code>。除此之外，我們又新設置了個鍵，<code>4</code>就自然而然的加到了循環的最後了。</p>
+
+<p>但是這點有個搞怪了。如果我們把<code>FYFZ</code>換成<code>FYFY</code>又會怎樣呢？來看看：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$array = ['EzEz' =&gt; 1, 'EzFY' =&gt; 2, 'FYEz' =&gt; 3];
+</span><span class='line'>$ref =& $array;
+</span><span class='line'>foreach ($array as $value) {
+</span><span class='line'>    unset($array['EzFY']);
+</span><span class='line'>    $array['FYFY'] = 4;
+</span><span class='line'>    reset($array);
+</span><span class='line'>    var_dump($value);
+</span><span class='line'>}
+</span><span class='line'>// output: 1 4</span></code></pre></td></tr></table></div></figure>
+
+
+<p>現在循環直接訪問到新加元素，無視餘下的數組元素。原因還是鍵<code>FYFY</code>和鍵<code>EzFY</code>衝突了( 實際上該數組中的所有鍵都衝突了 )。此外<code>FYFY</code>的哈希桶和<code>EzFY</code>的哈希桶用的是同一個內存地址，所以<code>EzFY</code>就被拋棄掉了。所以對PHP來講，還是同一個位置，同一個哈希表。只是位置被『重置』了，因此就直接跳到了數組末尾。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[在Magento產品評論中出現的時區問題]]></title>

@@ -4,7 +4,7 @@
   <title><![CDATA[Bill]]></title>
   <link href="http://billsion.github.io/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-06-26T15:52:39+08:00</updated>
+  <updated>2013-07-03T09:43:47+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -12,6 +12,121 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Magento 裏 Collection 的條件代碼表]]></title>
+    <link href="http://billsion.github.io/blog/2013/07/03/magento-filter-condition-codes/"/>
+    <updated>2013-07-03T09:27:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/07/03/magento-filter-condition-codes</id>
+    <content type="html"><![CDATA[<table>
+<thead>
+<tr>
+<th>Attribute Code </th>
+<th> SQL Equivalent </th>
+<th> Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>eq             </td>
+<td> =              </td>
+<td>            </td>
+</tr>
+<tr>
+<td>neq            </td>
+<td> !=             </td>
+<td>            </td>
+</tr>
+<tr>
+<td>like           </td>
+<td> LIKE           </td>
+<td>            </td>
+</tr>
+<tr>
+<td>nlike          </td>
+<td> NOT LIKE       </td>
+<td>            </td>
+</tr>
+<tr>
+<td>in             </td>
+<td> IN ( )         </td>
+<td>            </td>
+</tr>
+<tr>
+<td>nin            </td>
+<td> NOT IN ( )     </td>
+<td>            </td>
+</tr>
+<tr>
+<td>is             </td>
+<td> IS             </td>
+<td>            </td>
+</tr>
+<tr>
+<td>notnull        </td>
+<td> IS NOT NULL    </td>
+<td>            </td>
+</tr>
+<tr>
+<td>null           </td>
+<td> IS NULL        </td>
+<td>            </td>
+</tr>
+<tr>
+<td>moreq          </td>
+<td> &gt;=          </td>
+<td>            </td>
+</tr>
+<tr>
+<td>gt             </td>
+<td> &gt;           </td>
+<td>            </td>
+</tr>
+<tr>
+<td>lt             </td>
+<td> &lt;           </td>
+<td>            </td>
+</tr>
+<tr>
+<td>gteq           </td>
+<td> &gt;=          </td>
+<td>            </td>
+</tr>
+<tr>
+<td>lteq           </td>
+<td> &lt;=          </td>
+<td>            </td>
+</tr>
+<tr>
+<td>finset         </td>
+<td> FIND_IN_SET( ) </td>
+<td>            </td>
+</tr>
+<tr>
+<td>from           </td>
+<td> &gt;=          </td>
+<td> for use with dates            </td>
+</tr>
+<tr>
+<td>to             </td>
+<td> &lt;=          </td>
+<td> for use with dates           </td>
+</tr>
+<tr>
+<td>date           </td>
+<td>                </td>
+<td> optional flag for use with <em>from/to</em> to specify that comparison value should first be converted to a <em>date</em></td>
+</tr>
+<tr>
+<td>datetime       </td>
+<td>                </td>
+<td> optional flag for use with <em>from/to</em> to specify that comparison value should first be converted to a <em>date</em></td>
+</tr>
+</tbody>
+</table>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[PHP裏的Foreach到底是怎麼工作的]]></title>

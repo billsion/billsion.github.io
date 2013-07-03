@@ -1,0 +1,254 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Magento 裏 Collection 的條件代碼表 - Bill</title>
+	<meta name="author" content="Bill Sion">
+
+	
+	<meta name="description" content="Magento 裏Collection 的條件代碼表，平時用的比較多的就是eq, lt, gt，這次找了個全的，所有的查詢操作都在這張表裏了">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="Bill" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.ico" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">Bill</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="http://google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:billsion.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+	<form class="search" action="http://google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:billsion.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Magento 裏 Collection 的條件代碼表</h2>
+	<div class="entry-content"><table>
+<thead>
+<tr>
+<th>Attribute Code </th>
+<th> SQL Equivalent </th>
+<th> Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>eq             </td>
+<td> =              </td>
+<td>            </td>
+</tr>
+<tr>
+<td>neq            </td>
+<td> !=             </td>
+<td>            </td>
+</tr>
+<tr>
+<td>like           </td>
+<td> LIKE           </td>
+<td>            </td>
+</tr>
+<tr>
+<td>nlike          </td>
+<td> NOT LIKE       </td>
+<td>            </td>
+</tr>
+<tr>
+<td>in             </td>
+<td> IN ( )         </td>
+<td>            </td>
+</tr>
+<tr>
+<td>nin            </td>
+<td> NOT IN ( )     </td>
+<td>            </td>
+</tr>
+<tr>
+<td>is             </td>
+<td> IS             </td>
+<td>            </td>
+</tr>
+<tr>
+<td>notnull        </td>
+<td> IS NOT NULL    </td>
+<td>            </td>
+</tr>
+<tr>
+<td>null           </td>
+<td> IS NULL        </td>
+<td>            </td>
+</tr>
+<tr>
+<td>moreq          </td>
+<td> &gt;=          </td>
+<td>            </td>
+</tr>
+<tr>
+<td>gt             </td>
+<td> &gt;           </td>
+<td>            </td>
+</tr>
+<tr>
+<td>lt             </td>
+<td> &lt;           </td>
+<td>            </td>
+</tr>
+<tr>
+<td>gteq           </td>
+<td> &gt;=          </td>
+<td>            </td>
+</tr>
+<tr>
+<td>lteq           </td>
+<td> &lt;=          </td>
+<td>            </td>
+</tr>
+<tr>
+<td>finset         </td>
+<td> FIND_IN_SET( ) </td>
+<td>            </td>
+</tr>
+<tr>
+<td>from           </td>
+<td> &gt;=          </td>
+<td> for use with dates            </td>
+</tr>
+<tr>
+<td>to             </td>
+<td> &lt;=          </td>
+<td> for use with dates           </td>
+</tr>
+<tr>
+<td>date           </td>
+<td>                </td>
+<td> optional flag for use with <em>from/to</em> to specify that comparison value should first be converted to a <em>date</em></td>
+</tr>
+<tr>
+<td>datetime       </td>
+<td>                </td>
+<td> optional flag for use with <em>from/to</em> to specify that comparison value should first be converted to a <em>date</em></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-03T09:27:00+08:00" pubdate data-updated="true">Jul 3<span>rd</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/magento-fan-yi/'>Magento,翻譯</a>
+
+
+</div>
+	
+</div></article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2013
+
+    Bill Sion
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-40120225-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+</body>
+</html>

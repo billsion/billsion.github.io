@@ -7,7 +7,8 @@
 	<meta name="author" content="Bill Sion">
 
 	
-	<meta name="description" content="Attribute Code SQL Equivalent Description eq = neq != like LIKE nlike NOT LIKE in IN ( ) nin NOT IN ( ) is IS notnull IS NOT NULL null IS NULL moreq &hellip;">
+	<meta name="description" content="在做Magento企業版開發的時候，遇到一個問題。
+Abandon cart reminder 工作不正常。 Abandon cart reminder 是怎樣工作的 該功能是用來設置提醒那些在購物車裏還有商品沒有結賬的客戶回來結賬用，或是在心願單裏有商品的客戶趕緊將商品添加到購物車結賬。總之， &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -73,6 +74,78 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2013/09/11/abandon-cart-reminder-is-not-working-in-magento-enterprise-edition/">
+		
+			Magento企業版Abandon Cart Reminder不能正常工作</a>
+	</h2>
+	<div class="entry-content">
+		<p>在做Magento企業版開發的時候，遇到一個問題。
+Abandon cart reminder 工作不正常。</p>
+
+<h3>Abandon cart reminder 是怎樣工作的</h3>
+
+<p>該功能是用來設置提醒那些在購物車裏還有商品沒有結賬的客戶回來結賬用，或是在心願單裏有商品的客戶趕緊將商品添加到購物車結賬。總之，這就是種促銷手段，增加用戶的黏性。</p>
+
+<h3>但是它現在不能正常工作</h3>
+
+<p>現在的設置條件是：</p>
+
+<p><em>購物車為不為空並且購物車總金額也不為空，超過一天未結算。給這樣的用戶發郵件</em></p>
+
+<p>但是，這個功能有一個先天的錯誤。它只能對符合條件的用戶發一封郵件。我理解的正常情況下，它應該對未滿足條件的用戶按照schedule的設置不停發。</p>
+
+<p>一路跟蹤到：</p>
+
+<p><code>app/code/core/Enterprise/Reminder/Model/Resource/Rule.php</code></p>
+
+<p>463~464行。</p>
+
+<p>`$select->having(&#8216;log_sent_at_max IS NULL OR (&#8217; . $findInSetSql . &#8217; AND &#8217;</p>
+
+<pre><code>        . $_helper-&gt;getDateDiff('log_sent_at_max', $adapter-&gt;formatDate($currentDate)) . ' = 0)');`
+</code></pre>
+
+<p>最後這個<code>=0</code>便是問題所在。根據整個的SQL語句的語義：</p>
+
+<p><code>SELECT c.customer_id, c.coupon_id, c.rule_id, r.schedule, MAX(l.sent_at) AS log_sent_at_max, MIN(l.sent_at) AS log_sent_at_min FROM enterprise_reminder_rule_coupon AS c INNER JOIN enterprise_reminder_rule AS r ON c.rule_id = r.rule_id LEFT JOIN enterprise_reminder_rule_log AS l ON c.rule_id = l.rule_id AND c.customer_id = l.customer_id WHERE (c.is_active = 1) GROUP BY c.customer_id, c.rule_id HAVING (log_sent_at_max IS NULL OR (FIND_IN_SET((TO_DAYS('2013-09-11 08:25:12') - TO_DAYS(log_sent_at_min)), schedule) AND (TO_DAYS('2013-09-11 08:25:12') - TO_DAYS(log_sent_at_max)) = 0)) LIMIT 100</code></p>
+
+<p>除了第一天未發的情況，永遠不可能等於零。如果是第一天，那麽在第一個OR的時候就TRUE了。</p>
+
+<p>所以，這塊需要改動，將等於改為大於便可。</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-11T18:22:00+08:00" pubdate data-updated="true">Sep 11<span>th</span>, 2013</time></div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/magento/'>Magento</a>
+
+
+</div>
+	
+</div></article>
 
 
     <article class="post">
@@ -1867,94 +1940,10 @@
 	
 </div></article>
 
-
-    <article class="post">
-	<h2 class="title">
-		
-		<a href="/blog/2013/04/14/zai-magentozhong-he-bing-javascript-ding-hui-ti-sheng-fang-wen-su-du-ma/">
-		
-			在Magento中合并JavaScript一定会提升访问速度吗</a>
-	</h2>
-	<div class="entry-content">
-		<p>本文译自<a href="http://fishpig.co.uk/blog/why-you-shouldnt-merge-javascript-in-magento.html">fishpig</a></p>
-
-<p>很多人 - 包括我自己 - 认为把所有的独立JS文件合并成一个文件是一个提升前端速度不错的的方法。道理很简单，合并文件，自然就减少了浏览器在加载页面时的请求数量，好处自然就是缩短完成请求的时间，让页面载入更快。让我们通过Magento中的一个例子来看看它是怎么处理的。</p>
-
-<p>设想一下你刚刚在后台开启了Javascript 合并功能，这时有人来浏览你的网站。Magento将整理所有的XML布局文件并且判断在首页应该包含哪些Javascript。所有的这些被请求的JS文件都会被合并成一个单一文件并且以MD5加密的文件名来存储，此新文件，比如说是 f0eb853c09ba3e46ad21fb89b8d57626.js，只为那些浏览过该网页并保存在浏览器缓存中的用户服务。</p>
-
-<p>接下来，用户点击一个链接进入到目录页面。这时，Magento会再一次整理所有的XML布局文件并且判断目录页面会用到哪些JS文件。此时，Magento 会发现在首页用到的JS文件同样也会在目前的页面中用到，这一次不同，浏览器知道自己已经下载了这个文件，便不会再次下载。相反，文件会从用户的缓存中加载以节省时间，带宽和CPU资源！</p>
-
-<p>目前为止，一切都运行的好好的，我们通过减少对服务器的请求让页面变快了，但是……</p>
-
-<p>接下来，用户被一个产品吸引，于是点击进去到详细页面浏览。再一次，Magento判定哪些在布局文件(XML)里的JS文件需要被加载。此时，Magento发现会用到首页已经加载的JS文件，当然还有两个新文件需要加载。但是已有的合并文件中不存在这样的内容，于是Magento会新建一个名为139f9771ba2ba0cae754978fab4a3c35.js的文件。粗略估计该文件的80％和首页的脚本文件一样，已经被用户下载并缓存了。但还是会迫使用户下载该文件全部内容！虽然此文件的80％已经缓存了，但用户的浏览器完全不知情，还是会下载该文件并缓存！</p>
-
-<p>合并JS文件的初衷是为了减少页面的加载时间，但是在上述场景里，用户被迫再次下载一大块代码！这样做毫无疑问增加了页面载入时间（下载并不需要下载的JS文件，差不多有～40kb），这样做的结果反而和合并文件的初衷相违被。</p>
-
-<p>让我们来看看如果不开启合并JS会怎样。</p>
-
-<p>当用户第一次访问首页时，之前合并过的JS文件在这次请求中会被单独下载。虽然这些文件整个大小和之前合并文件的大小一致，但是请求时间会比较长，因为文件都是被单独请求/下载/缓存的。</p>
-
-<p>接下来，用户访问分类页面，这个页面用到了和之前在浏览首页时下载/缓存过的文件。结果就是此页面加载的时间和之前合并JS后加载页面用的时间一样。在这两种情况下，所有需要用到的JS文件都已经下载下来并且已经缓存了，总而言之，浏览器可以不管这些文件了。</p>
-
-<p>最后，用户访问了产品页面，此页面把之前在首页和分类页面加载过的文件，除此之外加载两个新文件。这些文件已经在首页或是分类页面缓存过了，所以浏览器直接跳过下载，并且缓存两个之前并没有访问过的文件！同时，Magento首页用到的文件占到了产品页面里JS文件数量的80%。当关闭合并选项后，我们就直接的下载了剩下的20%。在之前的合并例子里，等于说是整个重新下载了一遍！</p>
-
-<p>问题就是用户在访问不同页面时，JS文件也会有不同的组合，这样难免在一个页面中漏掉某一个JS，每当这种情况发生时，用户就会被强迫下载之前已经下载过的文件，并以另一个文件名保存。</p>
-
-<h3>怎么办?</h3>
-
-<p>当Magento的合并功能有问题时，就只能动手作些小修改了。</p>
-
-<p>在Magento里面，Javascript是通过XML文件里的Head block或是数组来循环添加到HTML里。我们建议加一个额外的参数在你的Javascript包含代码里，看下面的代码：</p>
-
-<pre><code>&lt;default&gt;
-    &lt;reference name="head"&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;prototype/prototype.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/builder.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;scriptaculous/effects.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;varien/form.js&lt;/script&gt;&lt;group&gt;global&lt;/group&gt;&lt;/action&gt;
-    &lt;/reference&gt;
-&lt;/default&gt;
-&lt;catalog_product_view&gt;
-    &lt;reference name="head"&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;varien/product.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
-        &lt;action method="addJs"&gt;&lt;script&gt;varien/configurable.js&lt;/script&gt;&lt;group&gt;product&lt;/group&gt;&lt;/action&gt;
-    &lt;/reference&gt;
-&lt;/catalog_product_view&gt;
-</code></pre>
-
-<p>注意到了新参数 group 吗？和合并所有的Javascript到一个文件不一样，group参数将会判断哪些Javascript文件需要合并。上面的代码将会为产品页面生成两个分开的合并文件: 一个是包含在首页里用到的全局Javascript，一个是包含只会在产品页面里用到的文件。虽然这样做会导制额外的请求，但这样做还是会节省时间，因为不用再去下载已经在首页下载过的文件！如果在整站中用到这个小技巧，每一个Javascript将只会被下载一次。</p>
-
-		
-		
-	</div>
-
-
-<div class="meta">
-	<div class="date">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-04-14T15:53:00+08:00" pubdate data-updated="true">Apr 14<span>th</span>, 2013</time></div>
-	<div class="tags">
-
-
-	<a class='category' href='/blog/categories/magento/'>Magento</a>, <a class='category' href='/blog/categories/fan-yi/'>翻译</a>
-
-
-</div>
-	
-</div></article>
-
 <nav id="pagenavi">
     
+    
+        <a href="/blog/page/2/" class="next">Next</a>
     
     <div class="center"><a href="/blog/archives">Blog Archives</a></div>
 </nav></div>

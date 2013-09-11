@@ -4,7 +4,7 @@
   <title><![CDATA[Bill]]></title>
   <link href="http://billsion.github.io/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-07-03T09:43:47+08:00</updated>
+  <updated>2013-09-11T18:25:01+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -12,6 +12,47 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Magento企業版Abandon Cart Reminder不能正常工作]]></title>
+    <link href="http://billsion.github.io/blog/2013/09/11/abandon-cart-reminder-is-not-working-in-magento-enterprise-edition/"/>
+    <updated>2013-09-11T18:22:00+08:00</updated>
+    <id>http://billsion.github.io/blog/2013/09/11/abandon-cart-reminder-is-not-working-in-magento-enterprise-edition</id>
+    <content type="html"><![CDATA[<p>在做Magento企業版開發的時候，遇到一個問題。
+Abandon cart reminder 工作不正常。</p>
+
+<h3>Abandon cart reminder 是怎樣工作的</h3>
+
+<p>該功能是用來設置提醒那些在購物車裏還有商品沒有結賬的客戶回來結賬用，或是在心願單裏有商品的客戶趕緊將商品添加到購物車結賬。總之，這就是種促銷手段，增加用戶的黏性。</p>
+
+<h3>但是它現在不能正常工作</h3>
+
+<p>現在的設置條件是：</p>
+
+<p><em>購物車為不為空並且購物車總金額也不為空，超過一天未結算。給這樣的用戶發郵件</em></p>
+
+<p>但是，這個功能有一個先天的錯誤。它只能對符合條件的用戶發一封郵件。我理解的正常情況下，它應該對未滿足條件的用戶按照schedule的設置不停發。</p>
+
+<p>一路跟蹤到：</p>
+
+<p><code>app/code/core/Enterprise/Reminder/Model/Resource/Rule.php</code></p>
+
+<p>463~464行。</p>
+
+<p>`$select->having(&#8216;log_sent_at_max IS NULL OR (&#8217; . $findInSetSql . &#8217; AND &#8217;</p>
+
+<pre><code>        . $_helper-&gt;getDateDiff('log_sent_at_max', $adapter-&gt;formatDate($currentDate)) . ' = 0)');`
+</code></pre>
+
+<p>最後這個<code>=0</code>便是問題所在。根據整個的SQL語句的語義：</p>
+
+<p><code>SELECT c.customer_id, c.coupon_id, c.rule_id, r.schedule, MAX(l.sent_at) AS log_sent_at_max, MIN(l.sent_at) AS log_sent_at_min FROM enterprise_reminder_rule_coupon AS c INNER JOIN enterprise_reminder_rule AS r ON c.rule_id = r.rule_id LEFT JOIN enterprise_reminder_rule_log AS l ON c.rule_id = l.rule_id AND c.customer_id = l.customer_id WHERE (c.is_active = 1) GROUP BY c.customer_id, c.rule_id HAVING (log_sent_at_max IS NULL OR (FIND_IN_SET((TO_DAYS('2013-09-11 08:25:12') - TO_DAYS(log_sent_at_min)), schedule) AND (TO_DAYS('2013-09-11 08:25:12') - TO_DAYS(log_sent_at_max)) = 0)) LIMIT 100</code></p>
+
+<p>除了第一天未發的情況，永遠不可能等於零。如果是第一天，那麽在第一個OR的時候就TRUE了。</p>
+
+<p>所以，這塊需要改動，將等於改為大於便可。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Magento 裏 Collection 的條件代碼表]]></title>

@@ -4,7 +4,7 @@
   <title><![CDATA[Bill]]></title>
   <link href="http://billsion.github.io/atom.xml" rel="self"/>
   <link href="http://billsion.github.io/"/>
-  <updated>2013-09-11T18:25:01+08:00</updated>
+  <updated>2013-09-11T18:26:58+08:00</updated>
   <id>http://billsion.github.io/</id>
   <author>
     <name><![CDATA[Bill Sion]]></name>
@@ -46,7 +46,9 @@ Abandon cart reminder 工作不正常。</p>
 
 <p>最後這個<code>=0</code>便是問題所在。根據整個的SQL語句的語義：</p>
 
-<p><code>SELECT c.customer_id, c.coupon_id, c.rule_id, r.schedule, MAX(l.sent_at) AS log_sent_at_max, MIN(l.sent_at) AS log_sent_at_min FROM enterprise_reminder_rule_coupon AS c INNER JOIN enterprise_reminder_rule AS r ON c.rule_id = r.rule_id LEFT JOIN enterprise_reminder_rule_log AS l ON c.rule_id = l.rule_id AND c.customer_id = l.customer_id WHERE (c.is_active = 1) GROUP BY c.customer_id, c.rule_id HAVING (log_sent_at_max IS NULL OR (FIND_IN_SET((TO_DAYS('2013-09-11 08:25:12') - TO_DAYS(log_sent_at_min)), schedule) AND (TO_DAYS('2013-09-11 08:25:12') - TO_DAYS(log_sent_at_max)) = 0)) LIMIT 100</code></p>
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>SELECT c.customer_id, c.coupon_id, c.rule_id, r.schedule, MAX(l.sent_at) AS log_sent_at_max, MIN(l.sent_at) AS log_sent_at_min FROM enterprise_reminder_rule_coupon AS c INNER JOIN enterprise_reminder_rule AS r ON c.rule_id = r.rule_id LEFT JOIN enterprise_reminder_rule_log AS l ON c.rule_id = l.rule_id AND c.customer_id = l.customer_id WHERE (c.is_active = 1) GROUP BY c.customer_id, c.rule_id HAVING (log_sent_at_max IS NULL OR (FIND_IN_SET((TO_DAYS('2013-09-11 08:25:12') - TO_DAYS(log_sent_at_min)), schedule) AND (TO_DAYS('2013-09-11 08:25:12') - TO_DAYS(log_sent_at_max)) = 0)) LIMIT 100</span></code></pre></td></tr></table></div></figure>
+
 
 <p>除了第一天未發的情況，永遠不可能等於零。如果是第一天，那麽在第一個OR的時候就TRUE了。</p>
 
